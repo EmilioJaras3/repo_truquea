@@ -1,31 +1,56 @@
 plugins {
-    id 'application'
     id 'java'
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id 'application'
 }
 
-group = 'org.alilopez'
-version = '1.0-SNAPSHOT'
+group = 'com.trukea'
+version = '1.0.0'
+sourceCompatibility = '17'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation("io.javalin:javalin-bundle:6.6.0")
-    implementation("org.slf4j:slf4j-simple:2.0.16")
-    implementation("com.mysql:mysql-connector-j:9.3.0")
-    implementation("com.zaxxer:HikariCP:5.1.0")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
-    implementation("io.github.cdimascio:dotenv-java:3.0.0")
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    // Javalin
+    implementation 'io.javalin:javalin:5.6.2'
+
+    // Jackson para JSON (AGREGADO - esto resuelve el problema)
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.0'
+
+    // MySQL Driver
+    implementation 'mysql:mysql-connector-java:8.0.33'
+
+    // JSON Processing (puedes mantener Gson si lo usas en otras partes)
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // Logging
+    implementation 'org.slf4j:slf4j-simple:2.0.7'
+
+    // File Upload
+    implementation 'commons-fileupload:commons-fileupload:1.5'
+    implementation 'commons-io:commons-io:2.11.0'
 }
 
 application {
-    mainClass = 'org.alilopez.Main'
+    mainClass = 'com.trukea.TrukeaApp'
 }
 
-test {
-    useJUnitPlatform()
+// Tarea para ejecutar la aplicación
+task runApp(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.trukea.TrukeaApp'
+}
+
+// Configuración para crear JAR ejecutable
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'com.trukea.TrukeaApp'
+        )
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
