@@ -24,11 +24,14 @@ public class UserController {
             UserDTO user = userService.getUserById(userId);
 
             if (user != null) {
+                ctx.contentType("application/json");
                 ctx.json(new ApiResponse(true, "Perfil obtenido exitosamente", Map.of("user", user)));
             } else {
+                ctx.contentType("application/json");
                 ctx.status(404).json(new ApiResponse(false, "Usuario no encontrado", null));
             }
         } catch (Exception e) {
+            ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error del servidor", null));
             e.printStackTrace();
         }
@@ -68,11 +71,14 @@ public class UserController {
 
             boolean success = userService.updateUser(userId, user);
             if (success) {
+                ctx.contentType("application/json");
                 ctx.json(new ApiResponse(true, "Perfil actualizado exitosamente", null));
             } else {
+                ctx.contentType("application/json");
                 ctx.status(404).json(new ApiResponse(false, "Usuario no encontrado", null));
             }
         } catch (Exception e) {
+            ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error al actualizar perfil", null));
             e.printStackTrace();
         }
@@ -86,6 +92,7 @@ public class UserController {
             int ciudad = ((Double) body.get("ciudad")).intValue();
 
             if (nombre == null || nombre.isEmpty()) {
+                ctx.contentType("application/json");
                 ctx.status(400).json(new ApiResponse(false, "Nombre es obligatorio", null));
                 return;
             }
@@ -96,11 +103,14 @@ public class UserController {
 
             boolean success = userService.updateUser(userId, user);
             if (success) {
+                ctx.contentType("application/json");
                 ctx.json(new ApiResponse(true, "Registro completado exitosamente", null));
             } else {
+                ctx.contentType("application/json");
                 ctx.status(404).json(new ApiResponse(false, "Usuario no encontrado", null));
             }
         } catch (Exception e) {
+            ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error al completar registro", null));
             e.printStackTrace();
         }

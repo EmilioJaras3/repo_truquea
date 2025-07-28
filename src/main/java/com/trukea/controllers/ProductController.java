@@ -34,8 +34,10 @@ public class ProductController {
                 products = productService.getAllProducts();
             }
 
+            ctx.contentType("application/json");
             ctx.json(new ApiResponse(true, "Productos obtenidos exitosamente", Map.of("products", products)));
         } catch (Exception e) {
+            ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error del servidor", null));
             e.printStackTrace();
         }
@@ -45,8 +47,10 @@ public class ProductController {
         try {
             int userId = Integer.parseInt(ctx.pathParam("userId"));
             List<ProductDTO> products = productService.getUserProducts(userId);
+            ctx.contentType("application/json");
             ctx.json(new ApiResponse(true, "Productos del usuario obtenidos", Map.of("products", products)));
         } catch (Exception e) {
+            ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error del servidor", null));
             e.printStackTrace();
         }
@@ -58,11 +62,14 @@ public class ProductController {
             ProductDTO product = productService.getProductById(productId);
 
             if (product != null) {
+                ctx.contentType("application/json");
                 ctx.json(new ApiResponse(true, "Producto obtenido", Map.of("product", product)));
             } else {
+                ctx.contentType("application/json");
                 ctx.status(404).json(new ApiResponse(false, "Producto no encontrado", null));
             }
         } catch (Exception e) {
+            ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error del servidor", null));
             e.printStackTrace();
         }
@@ -95,6 +102,7 @@ public class ProductController {
             }
 
             if (request.getNombreProducto() == null || request.getUsuario_id() == 0) {
+                ctx.contentType("application/json");
                 ctx.status(400).json(new ApiResponse(false, "Nombre del producto y usuario son obligatorios", null));
                 return;
             }
@@ -107,12 +115,15 @@ public class ProductController {
 
             int productId = productService.createProduct(request, imageName);
             if (productId > 0) {
+                ctx.contentType("application/json");
                 ctx.status(201).json(new ApiResponse(true, "Producto creado exitosamente",
                         Map.of("productId", productId)));
             } else {
+                ctx.contentType("application/json");
                 ctx.status(500).json(new ApiResponse(false, "Error al crear producto", null));
             }
         } catch (Exception e) {
+            ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error al crear producto", null));
             e.printStackTrace();
         }
@@ -151,11 +162,14 @@ public class ProductController {
 
             boolean success = productService.updateProduct(productId, product);
             if (success) {
+                ctx.contentType("application/json");
                 ctx.json(new ApiResponse(true, "Producto actualizado exitosamente", null));
             } else {
+                ctx.contentType("application/json");
                 ctx.status(404).json(new ApiResponse(false, "Producto no encontrado", null));
             }
         } catch (Exception e) {
+            ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error al actualizar producto", null));
             e.printStackTrace();
         }
@@ -167,11 +181,14 @@ public class ProductController {
             boolean success = productService.deleteProduct(productId);
 
             if (success) {
+                ctx.contentType("application/json");
                 ctx.json(new ApiResponse(true, "Producto eliminado exitosamente", null));
             } else {
+                ctx.contentType("application/json");
                 ctx.status(404).json(new ApiResponse(false, "Producto no encontrado", null));
             }
         } catch (Exception e) {
+            ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error al eliminar producto", null));
             e.printStackTrace();
         }

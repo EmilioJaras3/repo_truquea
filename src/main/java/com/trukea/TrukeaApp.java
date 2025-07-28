@@ -1,4 +1,3 @@
-
 package com.trukea;
 
 import io.javalin.Javalin;
@@ -29,6 +28,7 @@ public class TrukeaApp {
 
         // Ruta de prueba
         app.get("/api/test", ctx -> {
+            ctx.contentType("application/json");
             ctx.json(new ApiResponse(true, "API funcionando correctamente", null));
         });
 
