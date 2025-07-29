@@ -18,7 +18,7 @@ public class DatabaseConfig {
             System.out.println("✅ Conectado a la base de datos MySQL");
             conn.close();
         } catch (Exception e) {
-            System.err.println("❌ Error conectando a la base de datos: " + e.getMessage());
+            System.err.println(" Error conectando a la base de datos: " + e.getMessage());
         }
     }
 }
