@@ -1,4 +1,3 @@
-
 package com.trukea;
 
 import io.javalin.Javalin;
@@ -38,6 +37,8 @@ public class TrukeaApp {
         setupRoutes(app);
 
         System.out.println("🚀 Servidor Trukea API corriendo en puerto 3000");
+        System.out.println("🧪 Test: http://localhost:3000/api/test");
+        System.out.println("☁️ Cloudinary: do4nedzix");
     }
 
     private static void setupRoutes(Javalin app) {
@@ -49,6 +50,7 @@ public class TrukeaApp {
         CityController cityController = new CityController();
         TradeController tradeController = new TradeController();
         RatingController ratingController = new RatingController();
+        ImageController imageController = new ImageController();
 
         // Rutas de autenticación
         app.post("/api/auth/register", authController::register);
@@ -88,21 +90,13 @@ public class TrukeaApp {
         app.get("/api/ratings/user/{userId}", ratingController::getUserRatings);
         app.get("/api/ratings/pending/{userId}", ratingController::getPendingRatings);
 
-
         // Nuevas rutas de estadísticas y rankings
         app.get("/api/ratings/top-users", ratingController::getTopUsers);
         app.get("/api/ratings/most-active", ratingController::getMostActiveUsers);
         app.get("/api/ratings/statistics", ratingController::getStatistics);
 
-        // Ruta de imágenes (ya la tienes)
-        ImageController imageController = new ImageController();
+        // Rutas de imágenes
         app.get("/api/images/{fileName}", imageController::getImage);
-
-
-        System.out.println(" Rutas de imágenes configuradas: /api/images/{fileName}");
-        System.out.println(" Rutas de rankings configuradas:");
-        System.out.println("    /api/ratings/top-users");
-        System.out.println("    /api/ratings/most-active");
-        System.out.println("    /api/ratings/statistics");
+        app.get("/api/images/optimized/{fileName}", imageController::getImageOptimized);
     }
 }

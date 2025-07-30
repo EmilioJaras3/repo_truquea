@@ -15,13 +15,17 @@ dependencies {
     // Javalin
     implementation 'io.javalin:javalin:5.6.2'
 
-    // Jackson para JSON (AGREGADO - esto resuelve el problema)
+    // Jackson para JSON
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.0'
+
+    // ✅ CLOUDINARY - DEPENDENCIAS PRINCIPALES
+    implementation 'com.cloudinary:cloudinary-core:1.34.0'
+    implementation 'com.cloudinary:cloudinary-http44:1.34.0'
 
     // MySQL Driver
     implementation 'mysql:mysql-connector-java:8.0.33'
 
-    // JSON Processing (puedes mantener Gson si lo usas en otras partes)
+    // JSON Processing
     implementation 'com.google.code.gson:gson:2.10.1'
 
     // Logging
@@ -36,13 +40,11 @@ application {
     mainClass = 'com.trukea.TrukeaApp'
 }
 
-// Tarea para ejecutar la aplicación
 task runApp(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'com.trukea.TrukeaApp'
 }
 
-// Configuración para crear JAR ejecutable
 jar {
     manifest {
         attributes(

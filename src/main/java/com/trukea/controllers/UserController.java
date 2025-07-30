@@ -4,18 +4,18 @@ import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
 import com.trukea.ApiResponse;
 import com.trukea.service.UserService;
+import com.trukea.service.ImageService;  // ✅ NUEVO IMPORT
 import com.trukea.dto.UserDTO;
 import com.trukea.models.User;
 import java.util.Map;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class UserController {
     private UserService userService;
+    private ImageService imageService;  // ✅ NUEVO SERVICIO
 
     public UserController() {
         this.userService = new UserService();
+        this.imageService = new ImageService();  // ✅ INICIALIZAR CLOUDINARY SERVICE
     }
 
     public void getProfile(Context ctx) {
@@ -37,9 +37,18 @@ public class UserController {
         }
     }
 
+    // ✅ MÉTODO UPDATEPROFILE ACTUALIZADO CON CLOUDINARY
     public void updateProfile(Context ctx) {
         try {
             int userId = Integer.parseInt(ctx.pathParam("id"));
+
+            // ✅ Obtener usuario actual para manejar imagen existente
+            UserDTO currentUser = userService.getUserById(userId);
+            if (currentUser == null) {
+                ctx.contentType("application/json");
+                ctx.status(404).json(new ApiResponse(false, "Usuario no encontrado", null));
+                return;
+            }
 
             User user = new User();
             String nombre = ctx.formParam("nombre");
@@ -60,19 +69,38 @@ public class UserController {
                 user.setFechaNacimiento(java.time.LocalDate.parse(fechaNacimiento));
             }
 
-            // Manejar imagen
+            // ✅ MANEJAR IMAGEN DE PERFIL CON CLOUDINARY
             UploadedFile uploadedFile = ctx.uploadedFile("imagen");
             if (uploadedFile != null) {
-                String imageName = saveUploadedFile(uploadedFile);
-                if (imageName != null) {
-                    user.setImagenPerfil(imageName);
+                System.out.println("📤 Actualizando imagen de perfil para usuario ID: " + userId);
+
+                // Subir nueva imagen de perfil
+                String newImageUrl = imageService.uploadImage(uploadedFile, "usuarios");
+
+                if (newImageUrl != null) {
+                    // Eliminar imagen anterior si existe y es de Cloudinary
+                    if (currentUser.getImagenPerfil() != null && currentUser.getImagenPerfil().contains("cloudinary.com")) {
+                        boolean deleted = imageService.deleteImage(currentUser.getImagenPerfil());
+                        if (deleted) {
+                            System.out.println("🗑️ Imagen de perfil anterior eliminada para usuario ID: " + userId);
+                        }
+                    }
+
+                    user.setImagenPerfil(newImageUrl);
+                    System.out.println("✅ Nueva imagen de perfil actualizada para usuario ID: " + userId);
+                } else {
+                    ctx.contentType("application/json");
+                    ctx.status(400).json(new ApiResponse(false, "Error al subir la imagen de perfil. Verifica el formato y tamaño.", null));
+                    return;
                 }
             }
 
             boolean success = userService.updateUser(userId, user);
             if (success) {
                 ctx.contentType("application/json");
-                ctx.json(new ApiResponse(true, "Perfil actualizado exitosamente", null));
+                ctx.json(new ApiResponse(true, "Perfil actualizado exitosamente",
+                        Map.of("imageUrl", user.getImagenPerfil() != null ? user.getImagenPerfil() :
+                                (currentUser.getImagenPerfil() != null ? currentUser.getImagenPerfil() : ""))));
             } else {
                 ctx.contentType("application/json");
                 ctx.status(404).json(new ApiResponse(false, "Usuario no encontrado", null));
@@ -113,23 +141,6 @@ public class UserController {
             ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error al completar registro", null));
             e.printStackTrace();
-        }
-    }
-
-    private String saveUploadedFile(UploadedFile uploadedFile) {
-        try {
-            String fileName = System.currentTimeMillis() + "_" + uploadedFile.filename();
-            Path uploadPath = Paths.get("uploads");
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            Path filePath = uploadPath.resolve(fileName);
-            Files.copy(uploadedFile.content(), filePath);
-            return fileName;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
         }
     }
 }
