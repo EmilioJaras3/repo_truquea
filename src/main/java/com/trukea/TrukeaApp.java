@@ -17,6 +17,9 @@ public class TrukeaApp {
         // Inicializar base de datos
         DatabaseConfig.initialize();
 
+        // ✅ Puerto dinámico para despliegue en la nube
+        int port = Integer.parseInt(System.getenv("PORT") != null ? System.getenv("PORT") : "3000");
+
         // Crear aplicación Javalin (versión simplificada compatible)
         Javalin app = Javalin.create(config -> {
             // Configurar CORS de manera simple
@@ -25,7 +28,7 @@ public class TrukeaApp {
             });
 
             // Servir archivos estáticos (versión compatible)
-        }).start(3000);
+        }).start(port); // ✅ Usar puerto dinámico
 
         // Ruta de prueba
         app.get("/api/test", ctx -> {
@@ -36,8 +39,8 @@ public class TrukeaApp {
         // Configurar rutas
         setupRoutes(app);
 
-        System.out.println("🚀 Servidor Trukea API corriendo en puerto 3000");
-        System.out.println("🧪 Test: http://localhost:3000/api/test");
+        System.out.println("🚀 Servidor Trukea API corriendo en puerto " + port);
+        System.out.println("🧪 Test: http://localhost:" + port + "/api/test");
         System.out.println("☁️ Cloudinary: do4nedzix");
     }
 
