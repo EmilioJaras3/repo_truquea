@@ -256,7 +256,7 @@ public class ProductController {
             if (success) {
                 ctx.contentType("application/json");
 
-                // ✅ FIX: Usar HashMap en lugar de Map.of para evitar NullPointerException
+                //  FIX: Usar HashMap en lugar de Map.of para evitar NullPointerException
                 Map<String, Object> responseData = new java.util.HashMap<>();
                 String finalImageUrl = product.getImagen() != null ? product.getImagen() :
                         (currentProduct.getImagen() != null ? currentProduct.getImagen() : "");

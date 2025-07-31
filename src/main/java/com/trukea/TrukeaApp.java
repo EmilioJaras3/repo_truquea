@@ -18,15 +18,36 @@ public class TrukeaApp {
 
         int port = Integer.parseInt(System.getenv("PORT") != null ? System.getenv("PORT") : "3000");
 
-        // Crear aplicación Javalin (versión simplificada compatible)
+        // Crear aplicación Javalin con CORS mejorado
         Javalin app = Javalin.create(config -> {
-            // Configurar CORS de manera simple
+            // ✅ CORS MEJORADO - Configuración más específica
             config.plugins.enableCors(cors -> {
-                cors.add(it -> it.anyHost());
+                cors.add(corsConfig -> {
+                    corsConfig.anyHost();
+                    corsConfig.allowCredentials = false;
+                    corsConfig.exposeHeader("Access-Control-Allow-Origin");
+                });
             });
 
-            // Servir archivos estáticos (versión compatible)
-        }).start(port); //  Usar puerto dinámico
+            // ✅ AGREGAR archivos estáticos si necesitas
+            // config.staticFiles.add("/public", Location.CLASSPATH);
+        }).start(port);
+
+        // ✅ CONFIGURAR HEADERS CORS MANUALMENTE PARA TODOS LOS REQUESTS
+        app.before(ctx -> {
+            ctx.header("Access-Control-Allow-Origin", "*");
+            ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
+            ctx.header("Access-Control-Max-Age", "3600");
+        });
+
+        // ✅ MANEJAR PREFLIGHT OPTIONS REQUESTS
+        app.options("/*", ctx -> {
+            ctx.header("Access-Control-Allow-Origin", "*");
+            ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
+            ctx.status(200);
+        });
 
         // Ruta de prueba
         app.get("/api/test", ctx -> {
@@ -37,9 +58,10 @@ public class TrukeaApp {
         // Configurar rutas
         setupRoutes(app);
 
-        System.out.println(" Servidor Trukea API corriendo en puerto " + port);
-        System.out.println(" Test: http://localhost:" + port + "/api/test");
-        System.out.println("☁ Cloudinary: do4nedzix");
+        System.out.println("🚀 Servidor Trukea API corriendo en puerto " + port);
+        System.out.println("🔗 Test: http://localhost:" + port + "/api/test");
+        System.out.println("☁️ Cloudinary: do4nedzix");
+        System.out.println("🌐 CORS habilitado para todos los orígenes");
     }
 
     private static void setupRoutes(Javalin app) {
@@ -71,15 +93,19 @@ public class TrukeaApp {
         app.delete("/api/products/{id}", productController::deleteProduct);
         app.get("/api/debug/product/{id}", productController::debugProduct);
 
-
         // Rutas de categorías
         app.get("/api/categories", categoryController::getAllCategories);
 
         // Rutas de ciudades
         app.get("/api/cities", cityController::getAllCities);
 
-        // Rutas de trueques
-        app.post("/api/trades/propose", tradeController::proposeTrade);
+        // ✅ RUTAS DE TRUEQUES - Con logging extra para debug
+        app.post("/api/trades/propose", ctx -> {
+            System.out.println("🔄 Recibida propuesta de trueque desde: " + ctx.header("Origin"));
+            System.out.println("📋 Content-Type: " + ctx.header("Content-Type"));
+            tradeController.proposeTrade(ctx);
+        });
+
         app.get("/api/trades/received/{userId}", tradeController::getReceivedRequests);
         app.get("/api/trades/sent/{userId}", tradeController::getSentRequests);
         app.put("/api/trades/accept/{id}", tradeController::acceptTrade);
@@ -88,12 +114,12 @@ public class TrukeaApp {
         app.put("/api/trades/cancel/{id}", tradeController::cancelTrade);
         app.get("/api/trades/history/{userId}", tradeController::getTradeHistory);
 
-        // Rutas de calificaciones EXISTENTES
+        // Rutas de calificaciones
         app.post("/api/ratings", ratingController::createRating);
         app.get("/api/ratings/user/{userId}", ratingController::getUserRatings);
         app.get("/api/ratings/pending/{userId}", ratingController::getPendingRatings);
 
-        // Nuevas rutas de estadísticas y rankings
+        // Rutas de estadísticas y rankings
         app.get("/api/ratings/top-users", ratingController::getTopUsers);
         app.get("/api/ratings/most-active", ratingController::getMostActiveUsers);
         app.get("/api/ratings/statistics", ratingController::getStatistics);
@@ -101,8 +127,5 @@ public class TrukeaApp {
         // Rutas de imágenes
         app.get("/api/images/{fileName}", imageController::getImage);
         app.get("/api/images/optimized/{fileName}", imageController::getImageOptimized);
-
-
     }
-
 }
