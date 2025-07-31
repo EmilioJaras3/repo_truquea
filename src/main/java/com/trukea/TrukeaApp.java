@@ -18,35 +18,28 @@ public class TrukeaApp {
 
         int port = Integer.parseInt(System.getenv("PORT") != null ? System.getenv("PORT") : "3000");
 
-        // Crear aplicación Javalin con CORS mejorado
-        Javalin app = Javalin.create(config -> {
-            // ✅ CORS MEJORADO - Configuración más específica
-            config.plugins.enableCors(cors -> {
-                cors.add(corsConfig -> {
-                    corsConfig.anyHost();
-                    corsConfig.allowCredentials = false;
-                    corsConfig.exposeHeader("Access-Control-Allow-Origin");
-                });
-            });
+        // ✅ CREAR APLICACIÓN JAVALIN SIN CORS PLUGIN (más compatible)
+        Javalin app = Javalin.create().start(port);
 
-            // ✅ AGREGAR archivos estáticos si necesitas
-            // config.staticFiles.add("/public", Location.CLASSPATH);
-        }).start(port);
-
-        // ✅ CONFIGURAR HEADERS CORS MANUALMENTE PARA TODOS LOS REQUESTS
-        app.before(ctx -> {
+        // ✅ CORS MANUAL MÁS AGRESIVO - DEBE IR ANTES DE TODAS LAS RUTAS
+        app.before("/*", ctx -> {
+            // Headers CORS más completos
             ctx.header("Access-Control-Allow-Origin", "*");
-            ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
-            ctx.header("Access-Control-Max-Age", "3600");
+            ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH");
+            ctx.header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization, X-Requested-With, Access-Control-Request-Method, Access-Control-Request-Headers");
+            ctx.header("Access-Control-Allow-Credentials", "false");
+            ctx.header("Access-Control-Max-Age", "86400");
+
+            // Log para debug
+            System.out.println("🌐 CORS Headers agregados para: " + ctx.method() + " " + ctx.path());
+            System.out.println("🔗 Origin: " + ctx.header("Origin"));
         });
 
-        // ✅ MANEJAR PREFLIGHT OPTIONS REQUESTS
-        app.options("/*", ctx -> {
-            ctx.header("Access-Control-Allow-Origin", "*");
-            ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
+        // ✅ MANEJAR TODAS LAS REQUESTS OPTIONS (PREFLIGHT)
+        app.options("*", ctx -> {
+            System.out.println("✅ Manejando preflight OPTIONS para: " + ctx.path());
             ctx.status(200);
+            ctx.result(""); // Respuesta vacía
         });
 
         // Ruta de prueba
@@ -99,11 +92,30 @@ public class TrukeaApp {
         // Rutas de ciudades
         app.get("/api/cities", cityController::getAllCities);
 
-        // ✅ RUTAS DE TRUEQUES - Con logging extra para debug
+        // ✅ RUTAS DE TRUEQUES - Con manejo de errores mejorado
         app.post("/api/trades/propose", ctx -> {
-            System.out.println("🔄 Recibida propuesta de trueque desde: " + ctx.header("Origin"));
-            System.out.println("📋 Content-Type: " + ctx.header("Content-Type"));
-            tradeController.proposeTrade(ctx);
+            try {
+                System.out.println("🔄 === PROPUESTA DE TRUEQUE ===");
+                System.out.println("📨 Método: " + ctx.method());
+                System.out.println("🌐 Origin: " + ctx.header("Origin"));
+                System.out.println("📋 Content-Type: " + ctx.header("Content-Type"));
+                System.out.println("📄 Body: " + ctx.body());
+                System.out.println("===============================");
+
+                // Verificar que no sea preflight
+                if ("OPTIONS".equals(ctx.method())) {
+                    ctx.status(200);
+                    return;
+                }
+
+                // Llamar al controlador
+                tradeController.proposeTrade(ctx);
+
+            } catch (Exception e) {
+                System.err.println("❌ Error en proposeTrade: " + e.getMessage());
+                e.printStackTrace();
+                ctx.status(500).json(new ApiResponse(false, "Error interno del servidor: " + e.getMessage(), null));
+            }
         });
 
         app.get("/api/trades/received/{userId}", tradeController::getReceivedRequests);
