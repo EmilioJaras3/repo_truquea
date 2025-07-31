@@ -3,7 +3,6 @@ package com.trukea.config;
 import java.sql.*;
 
 public class DatabaseConfig {
-    // ✅ Usar variables de entorno
     private static final String URL = System.getenv("DATABASE_URL") != null
             ? System.getenv("DATABASE_URL")
             : "jdbc:mysql://52.71.195.110:3306/trukea_db";
@@ -22,10 +21,10 @@ public class DatabaseConfig {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection conn = getConnection();
-            System.out.println("✅ Conectado a la base de datos MySQL");
+            System.out.println(" Conectado a la base de datos MySQL");
             conn.close();
         } catch (Exception e) {
-            System.err.println("❌ Error conectando a la base de datos: " + e.getMessage());
+            System.err.println(" Error conectando a la base de datos: " + e.getMessage());
         }
     }
 }

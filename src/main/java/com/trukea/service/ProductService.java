@@ -1,7 +1,3 @@
-// ===============================================
-// PRODUCTSERVICE FALTANTE - src/main/java/com/trukea/service/ProductService.java
-// ===============================================
-
 package com.trukea.service;
 
 import com.trukea.dto.ProductDTO;
@@ -65,6 +61,7 @@ public class ProductService {
         return productRepository.deleteById(id);
     }
 
+    // ✅ MÉTODO CONVERTTO DTO ACTUALIZADO
     private ProductDTO convertToDTO(Product product) {
         ProductDTO dto = new ProductDTO();
         dto.setId(product.getId());
@@ -78,6 +75,10 @@ public class ProductService {
         dto.setUsuarioApellido(product.getUsuarioApellido());
         dto.setCiudadNombre(product.getCiudadNombre());
         dto.setDisponible(product.isDisponible());
+
+        // ✅ AGREGAR ESTA LÍNEA
+        dto.setUsuarioId(product.getUsuarioId());
+
         return dto;
     }
 }

@@ -239,13 +239,37 @@ public class ProductRepository {
     public boolean deleteById(int id) {
         try {
             Connection conn = DatabaseConfig.getConnection();
+
+            // ✅ Verificar si el producto está en trueques activos
+            PreparedStatement checkStmt = conn.prepareStatement(
+                    "SELECT COUNT(*) as count FROM trueques WHERE " +
+                            "(producto_ofrecido_id = ? OR producto_deseado_id = ?) " +
+                            "AND estado_id IN (1, 2)" // 1=Pendiente, 2=Aceptado
+            );
+            checkStmt.setInt(1, id);
+            checkStmt.setInt(2, id);
+
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next() && rs.getInt("count") > 0) {
+                System.out.println("❌ No se puede eliminar producto ID " + id + ": Tiene trueques activos");
+                conn.close();
+                return false;
+            }
+
             PreparedStatement stmt = conn.prepareStatement("DELETE FROM productos WHERE id = ?");
             stmt.setInt(1, id);
 
             int affectedRows = stmt.executeUpdate();
             conn.close();
+
+            if (affectedRows > 0) {
+                System.out.println("✅ Producto ID " + id + " eliminado exitosamente");
+            }
+
             return affectedRows > 0;
+
         } catch (SQLException e) {
+            System.err.println("❌ Error eliminando producto ID " + id + ": " + e.getMessage());
             e.printStackTrace();
         }
         return false;

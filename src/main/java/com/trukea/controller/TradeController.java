@@ -13,27 +13,88 @@ public class TradeController {
 
     public void proposeTrade(Context ctx) {
         try {
+            //  LOG: Inicio del proceso
+            System.out.println(" === INICIANDO PROPUESTA DE TRUEQUE ===");
+
             Map<String, Object> body = ctx.bodyAsClass(Map.class);
-            int productoOfrecidoId = ((Double) body.get("producto_ofrecido_id")).intValue();
-            int productoDeseadoId = ((Double) body.get("producto_deseado_id")).intValue();
-            int usuarioOferenteId = ((Double) body.get("usuario_oferente_id")).intValue();
+            System.out.println(" Body recibido: " + body);
+
+            //  LOG: Extrayendo datos del body
+            int productoOfrecidoId = getIntegerFromBody(body, "producto_ofrecido_id");
+            int productoDeseadoId = getIntegerFromBody(body, "producto_deseado_id");
+            int usuarioOferenteId = getIntegerFromBody(body, "usuario_oferente_id");
             String comentario = (String) body.get("comentario");
 
-            // Obtener el usuario receptor del producto deseado
+            System.out.println(" Datos extraídos:");
+            System.out.println("   - Producto Ofrecido ID: " + productoOfrecidoId);
+            System.out.println("   - Producto Deseado ID: " + productoDeseadoId);
+            System.out.println("   - Usuario Oferente ID: " + usuarioOferenteId);
+            System.out.println("   - Comentario: " + comentario);
+
+            //  LOG: Validaciones
+            if (productoOfrecidoId <= 0 || productoDeseadoId <= 0 || usuarioOferenteId <= 0) {
+                System.out.println(" Error: IDs inválidos");
+                ctx.status(400).json(new ApiResponse(false, "IDs de productos y usuario son obligatorios", null));
+                return;
+            }
+
+            System.out.println(" Validaciones básicas pasadas");
+
+            System.out.println("🔌 Conectando a base de datos...");
             Connection conn = DatabaseConfig.getConnection();
+            System.out.println(" Conexión establecida");
+
+            System.out.println("🔍 Buscando dueño del producto ID " + productoDeseadoId + "...");
             PreparedStatement getOwnerStmt = conn.prepareStatement("SELECT usuario_id FROM productos WHERE id = ?");
             getOwnerStmt.setInt(1, productoDeseadoId);
             ResultSet rs = getOwnerStmt.executeQuery();
 
             if (!rs.next()) {
-                ctx.status(400).json(new ApiResponse(false, "Producto no encontrado", null));
+                System.out.println(" Error: Producto deseado ID " + productoDeseadoId + " no encontrado");
+                ctx.status(400).json(new ApiResponse(false, "Producto deseado no encontrado", null));
                 conn.close();
                 return;
             }
 
             int usuarioReceptorId = rs.getInt("usuario_id");
+            System.out.println(" Producto deseado encontrado. Dueño: Usuario ID " + usuarioReceptorId);
 
-            // Insertar propuesta de trueque
+            if (usuarioOferenteId == usuarioReceptorId) {
+                System.out.println(" Error: Usuario " + usuarioOferenteId + " intenta intercambiar consigo mismo");
+                ctx.status(400).json(new ApiResponse(false, "No puedes intercambiar con tus propios productos", null));
+                conn.close();
+                return;
+            }
+
+            System.out.println("Validación de auto-intercambio pasada");
+
+            System.out.println("🔍 Verificando que el producto ofrecido ID " + productoOfrecidoId + " pertenece al usuario " + usuarioOferenteId + "...");
+            PreparedStatement checkOwnerStmt = conn.prepareStatement("SELECT usuario_id FROM productos WHERE id = ?");
+            checkOwnerStmt.setInt(1, productoOfrecidoId);
+            ResultSet ownerRs = checkOwnerStmt.executeQuery();
+
+            if (!ownerRs.next()) {
+                System.out.println(" Error: Producto ofrecido ID " + productoOfrecidoId + " no encontrado");
+                ctx.status(400).json(new ApiResponse(false, "Producto ofrecido no encontrado", null));
+                conn.close();
+                return;
+            }
+
+            int realOwnerOfOfferedProduct = ownerRs.getInt("usuario_id");
+            System.out.println(" Producto ofrecido ID " + productoOfrecidoId + " pertenece al usuario ID " + realOwnerOfOfferedProduct);
+
+            if (realOwnerOfOfferedProduct != usuarioOferenteId) {
+                System.out.println(" Error: Usuario " + usuarioOferenteId + " no es dueño del producto " + productoOfrecidoId);
+                System.out.println("   El verdadero dueño es: Usuario ID " + realOwnerOfOfferedProduct);
+                ctx.status(400).json(new ApiResponse(false, "No puedes ofrecer un producto que no te pertenece", null));
+                conn.close();
+                return;
+            }
+
+            System.out.println(" Verificación de propiedad pasada");
+
+            //  LOG: Insertar propuesta de trueque
+            System.out.println(" Insertando propuesta de trueque en base de datos...");
             PreparedStatement insertStmt = conn.prepareStatement(
                     "INSERT INTO trueques (producto_ofrecido_id, producto_deseado_id, usuario_oferente_id, usuario_receptor_id, comentario) " +
                             "VALUES (?, ?, ?, ?, ?)",
@@ -45,22 +106,73 @@ public class TradeController {
             insertStmt.setInt(4, usuarioReceptorId);
             insertStmt.setString(5, comentario);
 
+            System.out.println(" Parámetros SQL:");
+            System.out.println("   - producto_ofrecido_id: " + productoOfrecidoId);
+            System.out.println("   - producto_deseado_id: " + productoDeseadoId);
+            System.out.println("   - usuario_oferente_id: " + usuarioOferenteId);
+            System.out.println("   - usuario_receptor_id: " + usuarioReceptorId);
+            System.out.println("   - comentario: " + comentario);
+
             int affectedRows = insertStmt.executeUpdate();
+            System.out.println(" Filas afectadas: " + affectedRows);
+
             if (affectedRows > 0) {
                 ResultSet generatedKeys = insertStmt.getGeneratedKeys();
                 if (generatedKeys.next()) {
                     int tradeId = generatedKeys.getInt(1);
+                    System.out.println("🎉 ¡TRUEQUE CREADO EXITOSAMENTE!");
+                    System.out.println("   - Trade ID: " + tradeId);
+                    System.out.println("   - Usuario " + usuarioOferenteId + " ofrece producto " + productoOfrecidoId);
+                    System.out.println("   - A usuario " + usuarioReceptorId + " por producto " + productoDeseadoId);
+
                     ctx.status(201).json(new ApiResponse(true, "Propuesta de trueque enviada exitosamente",
                             Map.of("tradeId", tradeId)));
                 }
+            } else {
+                System.out.println(" Error: No se insertaron filas");
+                ctx.status(500).json(new ApiResponse(false, "Error al insertar trueque", null));
             }
 
             conn.close();
-        } catch (Exception e) {
-            ctx.status(500).json(new ApiResponse(false, "Error al crear propuesta de trueque", null));
+            System.out.println("🔄 === FIN PROCESO TRUEQUE ===");
+
+        } catch (SQLException e) {
+            System.err.println(" ERROR SQL:");
+            System.err.println("   - Mensaje: " + e.getMessage());
+            System.err.println("   - Código: " + e.getErrorCode());
+            System.err.println("   - Estado SQL: " + e.getSQLState());
             e.printStackTrace();
+            ctx.status(500).json(new ApiResponse(false, "Error de base de datos: " + e.getMessage(), null));
+        } catch (Exception e) {
+            System.err.println("💥 ERROR GENERAL:");
+            System.err.println("   - Tipo: " + e.getClass().getSimpleName());
+            System.err.println("   - Mensaje: " + e.getMessage());
+            e.printStackTrace();
+            ctx.status(500).json(new ApiResponse(false, "Error al crear propuesta de trueque: " + e.getMessage(), null));
         }
     }
+
+    private int getIntegerFromBody(Map<String, Object> body, String key) {
+        Object value = body.get(key);
+        System.out.println("🔍 Convirtiendo " + key + ": " + value + " (tipo: " + (value != null ? value.getClass().getSimpleName() : "null") + ")");
+
+        if (value instanceof Integer) {
+            return (Integer) value;
+        } else if (value instanceof Double) {
+            return ((Double) value).intValue();
+        } else if (value instanceof String) {
+            try {
+                return Integer.parseInt((String) value);
+            } catch (NumberFormatException e) {
+                System.err.println(" Error convirtiendo " + key + " a entero: " + value);
+                return 0;
+            }
+        }
+        System.err.println(" Valor inválido para " + key + ": " + value);
+        return 0;
+    }
+
+    // ... resto de métodos permanecen igual (getReceivedRequests, getSentRequests, etc.)
 
     public void getReceivedRequests(Context ctx) {
         try {

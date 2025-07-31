@@ -13,10 +13,13 @@ public class ProductDTO {
     private String ciudadNombre;
     private boolean disponible;
 
+    // ✅ AGREGAR ESTE CAMPO
+    private int usuarioId;
+
     // Constructores
     public ProductDTO() {}
 
-    // Getters y Setters
+    // Getters y Setters EXISTENTES
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getNombre() { return nombre; }
@@ -39,4 +42,8 @@ public class ProductDTO {
     public void setCiudadNombre(String ciudadNombre) { this.ciudadNombre = ciudadNombre; }
     public boolean isDisponible() { return disponible; }
     public void setDisponible(boolean disponible) { this.disponible = disponible; }
+
+    // ✅ NUEVO GETTER Y SETTER
+    public int getUsuarioId() { return usuarioId; }
+    public void setUsuarioId(int usuarioId) { this.usuarioId = usuarioId; }
 }

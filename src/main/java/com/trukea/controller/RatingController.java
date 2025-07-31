@@ -21,7 +21,6 @@ public class RatingController {
         this.ratingService = new RatingService();
     }
 
-    // ✅ TUS MÉTODOS EXISTENTES (NO TOCAR)
     public void createRating(Context ctx) {
         try {
             Map<String, Object> body = ctx.bodyAsClass(Map.class);
@@ -79,9 +78,6 @@ public class RatingController {
         }
     }
 
-    // ===================================================================
-    // 🚀 NUEVOS MÉTODOS - AGREGAR ESTOS AL FINAL DE TU ARCHIVO
-    // ===================================================================
 
     public void getTopUsers(Context ctx) {
         try {

@@ -8,8 +8,11 @@ import com.trukea.service.ImageService;
 import com.trukea.dto.ProductDTO;
 import com.trukea.dto.CreateProductRequestDTO;
 import com.trukea.models.Product;
+import com.trukea.config.DatabaseConfig;
+import java.sql.*;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 public class ProductController {
     private ProductService productService;
@@ -75,9 +78,48 @@ public class ProductController {
         }
     }
 
+    public void debugProduct(Context ctx) {
+        try {
+            int productId = Integer.parseInt(ctx.pathParam("id"));
+
+            System.out.println("🔍 DEBUG: Consultando producto ID " + productId + " directamente en BD...");
+
+            Connection conn = DatabaseConfig.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT id, nombre, usuario_id, descripcion, valor_estimado FROM productos WHERE id = ?"
+            );
+            stmt.setInt(1, productId);
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                Map<String, Object> debug = new HashMap<>();
+                debug.put("id", rs.getInt("id"));
+                debug.put("nombre", rs.getString("nombre"));
+                debug.put("usuario_id", rs.getInt("usuario_id"));
+                debug.put("descripcion", rs.getString("descripcion"));
+                debug.put("valor_estimado", rs.getDouble("valor_estimado"));
+
+                System.out.println(" DEBUG: Producto encontrado - usuario_id: " + rs.getInt("usuario_id"));
+
+                ctx.contentType("application/json");
+                ctx.json(new ApiResponse(true, "Debug producto", debug));
+            } else {
+                System.out.println(" DEBUG: Producto no encontrado");
+                ctx.contentType("application/json");
+                ctx.status(404).json(new ApiResponse(false, "Producto no encontrado", null));
+            }
+
+            conn.close();
+        } catch (Exception e) {
+            System.err.println(" DEBUG ERROR: " + e.getMessage());
+            e.printStackTrace();
+            ctx.contentType("application/json");
+            ctx.status(500).json(new ApiResponse(false, "Error: " + e.getMessage(), null));
+        }
+    }
+
     public void createProduct(Context ctx) {
         try {
-            // ✅ LOG: Inicio del proceso
             System.out.println("🔍 Iniciando creación de producto...");
 
             CreateProductRequestDTO request = new CreateProductRequestDTO();
@@ -104,11 +146,10 @@ public class ProductController {
                 request.setUsuario_id(Integer.parseInt(userIdStr));
             }
 
-            // ✅ LOG: Datos recibidos
-            System.out.println("📝 Producto: " + request.getNombreProducto() + " | Usuario: " + request.getUsuario_id());
+            System.out.println(" Producto: " + request.getNombreProducto() + " | Usuario: " + request.getUsuario_id());
 
             if (request.getNombreProducto() == null || request.getUsuario_id() == 0) {
-                System.out.println("❌ Faltan datos obligatorios");
+                System.out.println(" Faltan datos obligatorios");
                 ctx.contentType("application/json");
                 ctx.status(400).json(new ApiResponse(false, "Nombre del producto y usuario son obligatorios", null));
                 return;
@@ -118,45 +159,40 @@ public class ProductController {
             UploadedFile uploadedFile = ctx.uploadedFile("imagen");
 
             if (uploadedFile != null) {
-                // ✅ LOG: Imagen recibida
-                System.out.println("📸 Imagen recibida: " + uploadedFile.filename() + " (" + uploadedFile.size() + " bytes)");
+                System.out.println(" Imagen recibida: " + uploadedFile.filename() + " (" + uploadedFile.size() + " bytes)");
 
                 imageUrl = imageService.uploadImage(uploadedFile, "productos");
 
                 if (imageUrl == null) {
-                    System.out.println("❌ Fallo al subir imagen a Cloudinary");
+                    System.out.println(" Fallo al subir imagen a Cloudinary");
                     ctx.contentType("application/json");
                     ctx.status(400).json(new ApiResponse(false, "Error al subir la imagen. Verifica el formato y tamaño.", null));
                     return;
                 } else {
-                    // ✅ LOG: Imagen subida exitosamente
-                    System.out.println("✅ Imagen en Cloudinary: " + imageUrl);
+
+                    System.out.println(" Imagen en Cloudinary: " + imageUrl);
                 }
             } else {
-                System.out.println("📝 Producto sin imagen");
+                System.out.println(" Producto sin imagen");
             }
 
-            // ✅ LOG: Guardando en BD
-            System.out.println("💾 Guardando en base de datos...");
+            System.out.println(" Guardando en base de datos...");
 
             int productId = productService.createProduct(request, imageUrl);
 
             if (productId > 0) {
-                // ✅ LOG: Éxito total
-                System.out.println("🎉 Producto creado exitosamente - ID: " + productId);
+                System.out.println(" Producto creado exitosamente - ID: " + productId);
                 ctx.contentType("application/json");
                 ctx.status(201).json(new ApiResponse(true, "Producto creado exitosamente",
                         Map.of("productId", productId, "imageUrl", imageUrl != null ? imageUrl : "")));
             } else {
-                // ✅ LOG: Error en BD
-                System.out.println("❌ Error: Base de datos no pudo crear el producto");
+                System.out.println(" Error: Base de datos no pudo crear el producto");
                 ctx.contentType("application/json");
                 ctx.status(500).json(new ApiResponse(false, "Error al crear producto en base de datos", null));
             }
 
         } catch (Exception e) {
-            // ✅ LOG: Error general
-            System.out.println("💥 Error inesperado: " + e.getMessage());
+            System.out.println(" Error inesperado: " + e.getMessage());
             e.printStackTrace();
             ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error al crear producto: " + e.getMessage(), null));
@@ -219,8 +255,14 @@ public class ProductController {
             boolean success = productService.updateProduct(productId, product);
             if (success) {
                 ctx.contentType("application/json");
-                ctx.json(new ApiResponse(true, "Producto actualizado exitosamente",
-                        Map.of("imageUrl", product.getImagen() != null ? product.getImagen() : currentProduct.getImagen())));
+
+                // ✅ FIX: Usar HashMap en lugar de Map.of para evitar NullPointerException
+                Map<String, Object> responseData = new java.util.HashMap<>();
+                String finalImageUrl = product.getImagen() != null ? product.getImagen() :
+                        (currentProduct.getImagen() != null ? currentProduct.getImagen() : "");
+                responseData.put("imageUrl", finalImageUrl);
+
+                ctx.json(new ApiResponse(true, "Producto actualizado exitosamente", responseData));
             } else {
                 ctx.contentType("application/json");
                 ctx.status(404).json(new ApiResponse(false, "Producto no encontrado", null));
