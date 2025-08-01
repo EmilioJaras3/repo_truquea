@@ -5,21 +5,16 @@ import com.trukea.ApiResponse;
 
 public class ImageController {
 
-    /**
-     * ✅ Endpoint para mostrar imágenes de Cloudinary
-     * Redirige automáticamente a Cloudinary o construye la URL
-     */
+
     public void getImage(Context ctx) {
         try {
             String fileName = ctx.pathParam("fileName");
 
-            // ✅ Si ya es una URL completa de Cloudinary, redirigir directamente
             if (fileName.startsWith("https://res.cloudinary.com")) {
                 ctx.redirect(fileName);
                 return;
             }
 
-            // ✅ Si es solo el nombre del archivo, construir URL de Cloudinary
             String cloudinaryUrl = "https://res.cloudinary.com/do4nedzix/image/upload/" + fileName;
             ctx.redirect(cloudinaryUrl);
 
@@ -29,10 +24,7 @@ public class ImageController {
         }
     }
 
-    /**
-     * ✅ Endpoint alternativo para obtener imagen optimizada
-     * Permite pasar parámetros de transformación
-     */
+
     public void getImageOptimized(Context ctx) {
         try {
             String fileName = ctx.pathParam("fileName");
@@ -40,7 +32,6 @@ public class ImageController {
             String height = ctx.queryParam("h"); // ?h=200
             String quality = ctx.queryParam("q"); // ?q=80
 
-            // ✅ Construir URL con transformaciones
             StringBuilder cloudinaryUrl = new StringBuilder("https://res.cloudinary.com/do4nedzix/image/upload/");
 
             // Agregar transformaciones si están presentes

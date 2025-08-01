@@ -82,7 +82,7 @@ public class ProductController {
         try {
             int productId = Integer.parseInt(ctx.pathParam("id"));
 
-            System.out.println("🔍 DEBUG: Consultando producto ID " + productId + " directamente en BD...");
+            System.out.println("🔍DEBUG: Consultando producto ID " + productId + " directamente en BD...");
 
             Connection conn = DatabaseConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(

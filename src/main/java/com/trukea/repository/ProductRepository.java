@@ -240,7 +240,6 @@ public class ProductRepository {
         try {
             Connection conn = DatabaseConfig.getConnection();
 
-            // ✅ Verificar si el producto está en trueques activos
             PreparedStatement checkStmt = conn.prepareStatement(
                     "SELECT COUNT(*) as count FROM trueques WHERE " +
                             "(producto_ofrecido_id = ? OR producto_deseado_id = ?) " +
@@ -251,7 +250,7 @@ public class ProductRepository {
 
             ResultSet rs = checkStmt.executeQuery();
             if (rs.next() && rs.getInt("count") > 0) {
-                System.out.println("❌ No se puede eliminar producto ID " + id + ": Tiene trueques activos");
+                System.out.println(" No se puede eliminar producto ID " + id + ": Tiene trueques activos");
                 conn.close();
                 return false;
             }
@@ -263,13 +262,13 @@ public class ProductRepository {
             conn.close();
 
             if (affectedRows > 0) {
-                System.out.println("✅ Producto ID " + id + " eliminado exitosamente");
+                System.out.println("Producto ID " + id + " eliminado exitosamente");
             }
 
             return affectedRows > 0;
 
         } catch (SQLException e) {
-            System.err.println("❌ Error eliminando producto ID " + id + ": " + e.getMessage());
+            System.err.println(" Error eliminando producto ID " + id + ": " + e.getMessage());
             e.printStackTrace();
         }
         return false;

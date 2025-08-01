@@ -34,12 +34,12 @@ public class CloudinaryConfig {
                 long timestamp = System.currentTimeMillis() / 1000;
                 String folderPath = "trukea/" + folder;
 
-                // ✅ SOLO PARÁMETROS BÁSICOS
+                //  SOLO PARÁMETROS BÁSICOS
                 writeFormField(out, boundary, "api_key", API_KEY);
                 writeFormField(out, boundary, "timestamp", String.valueOf(timestamp));
                 writeFormField(out, boundary, "folder", folderPath);
 
-                // ✅ FIRMA SIMPLE - Solo 3 parámetros
+                //  FIRMA SIMPLE - Solo 3 parámetros
                 String signature = createSimpleSignature(timestamp, folderPath);
                 writeFormField(out, boundary, "signature", signature);
 
@@ -51,7 +51,7 @@ public class CloudinaryConfig {
             }
 
             int responseCode = connection.getResponseCode();
-            System.out.println("🌩️ Cloudinary respuesta: " + responseCode);
+            System.out.println("️ Cloudinary respuesta: " + responseCode);
 
             if (responseCode == 200) {
                 java.io.BufferedReader reader = new java.io.BufferedReader(
@@ -67,7 +67,7 @@ public class CloudinaryConfig {
                     int end = response.indexOf("\"", start);
                     String imageUrl = response.substring(start, end);
 
-                    System.out.println("✅ Imagen subida: " + imageUrl);
+                    System.out.println(" Imagen subida: " + imageUrl);
                     return imageUrl;
                 }
             } else {
@@ -78,27 +78,25 @@ public class CloudinaryConfig {
                 String errorResponse = errorReader.lines().collect(java.util.stream.Collectors.joining());
                 errorReader.close();
 
-                System.err.println("❌ Error Cloudinary código: " + responseCode);
+                System.err.println(" Error Cloudinary código: " + responseCode);
                 System.err.println("📋 Error detalle: " + errorResponse);
             }
 
         } catch (IOException e) {
-            System.err.println("❌ Error de conexión: " + e.getMessage());
+            System.err.println(" Error de conexión: " + e.getMessage());
             e.printStackTrace();
         }
 
         return null;
     }
 
-    /**
-     * ✅ FIRMA SIMPLE - Solo folder, timestamp y api_secret
-     */
+
     private static String createSimpleSignature(long timestamp, String folder) {
         try {
             // Solo parámetros básicos en orden alfabético
             String params = "folder=" + folder + "&timestamp=" + timestamp + API_SECRET;
 
-            System.out.println("🔐 Creando firma para: folder=" + folder + "&timestamp=" + timestamp);
+            System.out.println(" Creando firma para: folder=" + folder + "&timestamp=" + timestamp);
 
             java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-1");
             byte[] hashBytes = md.digest(params.getBytes(StandardCharsets.UTF_8));
@@ -113,12 +111,12 @@ public class CloudinaryConfig {
             }
 
             String signature = hexString.toString();
-            System.out.println("🔐 Firma generada: " + signature);
+            System.out.println(" Firma generada: " + signature);
 
             return signature;
 
         } catch (Exception e) {
-            System.err.println("❌ Error creando firma: " + e.getMessage());
+            System.err.println(" Error creando firma: " + e.getMessage());
             return "";
         }
     }
@@ -171,13 +169,13 @@ public class CloudinaryConfig {
             boolean success = responseCode == 200;
 
             if (success) {
-                System.out.println("✅ Imagen eliminada: " + publicId);
+                System.out.println(" Imagen eliminada: " + publicId);
             }
 
             return success;
 
         } catch (Exception e) {
-            System.err.println("❌ Error eliminando imagen: " + e.getMessage());
+            System.err.println(" Error eliminando imagen: " + e.getMessage());
             return false;
         }
     }
@@ -223,7 +221,7 @@ public class CloudinaryConfig {
                 }
             }
         } catch (Exception e) {
-            System.err.println("❌ Error extrayendo public_id: " + e.getMessage());
+            System.err.println(" Error extrayendo public_id: " + e.getMessage());
         }
 
         return null;

@@ -134,7 +134,7 @@ public class TradeController {
             }
 
             conn.close();
-            System.out.println("🔄 === FIN PROCESO TRUEQUE ===");
+            System.out.println("=== FIN PROCESO TRUEQUE ===");
 
         } catch (SQLException e) {
             System.err.println(" ERROR SQL:");
@@ -144,7 +144,7 @@ public class TradeController {
             e.printStackTrace();
             ctx.status(500).json(new ApiResponse(false, "Error de base de datos: " + e.getMessage(), null));
         } catch (Exception e) {
-            System.err.println("💥 ERROR GENERAL:");
+            System.err.println(" ERROR GENERAL:");
             System.err.println("   - Tipo: " + e.getClass().getSimpleName());
             System.err.println("   - Mensaje: " + e.getMessage());
             e.printStackTrace();
