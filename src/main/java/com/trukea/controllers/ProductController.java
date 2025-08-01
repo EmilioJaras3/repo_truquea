@@ -99,44 +99,43 @@ public class ProductController {
                 debug.put("descripcion", rs.getString("descripcion"));
                 debug.put("valor_estimado", rs.getDouble("valor_estimado"));
 
-                System.out.println("✅ DEBUG: Producto encontrado - usuario_id: " + rs.getInt("usuario_id"));
+                System.out.println(" DEBUG: Producto encontrado - usuario_id: " + rs.getInt("usuario_id"));
 
                 ctx.contentType("application/json");
                 ctx.json(new ApiResponse(true, "Debug producto", debug));
             } else {
-                System.out.println("❌ DEBUG: Producto no encontrado");
+                System.out.println(" DEBUG: Producto no encontrado");
                 ctx.contentType("application/json");
                 ctx.status(404).json(new ApiResponse(false, "Producto no encontrado", null));
             }
 
             conn.close();
         } catch (Exception e) {
-            System.err.println("❌ DEBUG ERROR: " + e.getMessage());
+            System.err.println(" DEBUG ERROR: " + e.getMessage());
             e.printStackTrace();
             ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error: " + e.getMessage(), null));
         }
     }
 
-    // ✅ MÉTODO CREATEPRODUCT MODIFICADO PARA ACEPTAR JSON
     public void createProduct(Context ctx) {
         try {
             System.out.println("🔍 === INICIANDO CREACIÓN DE PRODUCTO ===");
 
-            // ✅ LEER JSON EN LUGAR DE FORM-DATA
+            // LEER JSON EN LUGAR DE FORM-DATA
             Map<String, Object> body = ctx.bodyAsClass(Map.class);
             System.out.println("📨 Body recibido: " + body);
 
             CreateProductRequestDTO request = new CreateProductRequestDTO();
 
-            // ✅ EXTRAER DATOS DEL JSON
+            //  EXTRAER DATOS DEL JSON
             String nombreProducto = (String) body.get("nombreProducto");
             String descripcionProducto = (String) body.get("descripcionProducto");
 
             request.setNombreProducto(nombreProducto);
             request.setDescripcionProducto(descripcionProducto);
 
-            // ✅ MANEJAR NÚMEROS CON CONVERSIÓN SEGURA
+            //  MANEJAR NÚMEROS CON CONVERSIÓN SEGURA
             if (body.get("valorEstimado") != null) {
                 Object valorObj = body.get("valorEstimado");
                 if (valorObj instanceof Number) {
@@ -173,31 +172,30 @@ public class ProductController {
                 }
             }
 
-            System.out.println("📋 Datos extraídos:");
+            System.out.println(" Datos extraídos:");
             System.out.println("   - Nombre: " + request.getNombreProducto());
             System.out.println("   - Usuario ID: " + request.getUsuario_id());
             System.out.println("   - Categoría ID: " + request.getIdCategoria());
             System.out.println("   - Calidad ID: " + request.getIdCalidad());
             System.out.println("   - Valor: " + request.getValorEstimado());
 
-            // ✅ VALIDACIÓN
+            //  VALIDACIÓN
             if (request.getNombreProducto() == null || request.getNombreProducto().trim().isEmpty() || request.getUsuario_id() == 0) {
-                System.out.println("❌ Faltan datos obligatorios");
+                System.out.println(" Faltan datos obligatorios");
                 ctx.contentType("application/json");
                 ctx.status(400).json(new ApiResponse(false, "Nombre del producto y usuario son obligatorios", null));
                 return;
             }
 
-            // ✅ MANEJO DE IMAGEN - POR AHORA SIN IMAGEN (SOLO JSON)
             String imageUrl = null;
-            System.out.println("📷 Producto sin imagen (JSON mode)");
+            System.out.println(" Producto sin imagen (JSON mode)");
 
-            System.out.println("💾 Guardando en base de datos...");
+            System.out.println(" Guardando en base de datos...");
 
             int productId = productService.createProduct(request, imageUrl);
 
             if (productId > 0) {
-                System.out.println("🎉 ¡PRODUCTO CREADO EXITOSAMENTE!");
+                System.out.println(" ¡PRODUCTO CREADO EXITOSAMENTE!");
                 System.out.println("   - Product ID: " + productId);
                 System.out.println("   - Nombre: " + request.getNombreProducto());
                 System.out.println("   - Usuario: " + request.getUsuario_id());
@@ -206,7 +204,7 @@ public class ProductController {
                 ctx.status(201).json(new ApiResponse(true, "Producto creado exitosamente",
                         Map.of("productId", productId, "imageUrl", imageUrl != null ? imageUrl : "")));
             } else {
-                System.out.println("❌ Error: Base de datos no pudo crear el producto");
+                System.out.println(" Error: Base de datos no pudo crear el producto");
                 ctx.contentType("application/json");
                 ctx.status(500).json(new ApiResponse(false, "Error al crear producto en base de datos", null));
             }
@@ -214,7 +212,7 @@ public class ProductController {
             System.out.println("🔄 === FIN CREACIÓN PRODUCTO ===");
 
         } catch (Exception e) {
-            System.out.println("💥 ERROR INESPERADO:");
+            System.out.println(" ERROR INESPERADO:");
             System.out.println("   - Tipo: " + e.getClass().getSimpleName());
             System.out.println("   - Mensaje: " + e.getMessage());
             e.printStackTrace();
@@ -223,7 +221,6 @@ public class ProductController {
         }
     }
 
-    // ✅ MÉTODO UPDATEPRODUCT MODIFICADO PARA ACEPTAR JSON
     public void updateProduct(Context ctx) {
         try {
             int productId = Integer.parseInt(ctx.pathParam("id"));
@@ -235,13 +232,13 @@ public class ProductController {
                 return;
             }
 
-            // ✅ LEER JSON EN LUGAR DE FORM-DATA
+            //  LEER JSON EN LUGAR DE FORM-DATA
             Map<String, Object> body = ctx.bodyAsClass(Map.class);
             System.out.println("📨 Actualizando producto ID " + productId + " con data: " + body);
 
             Product product = new Product();
 
-            // ✅ EXTRAER DATOS DEL JSON
+            //  EXTRAER DATOS DEL JSON
             String nombre = (String) body.get("nombre");
             String descripcion = (String) body.get("descripcion");
 
@@ -252,7 +249,7 @@ public class ProductController {
                 product.setDescripcion(descripcion);
             }
 
-            // ✅ MANEJAR NÚMEROS
+            //  MANEJAR NÚMEROS
             if (body.get("valorEstimado") != null) {
                 Object valorObj = body.get("valorEstimado");
                 if (valorObj instanceof Number) {
@@ -280,12 +277,12 @@ public class ProductController {
                 }
             }
 
-            // ✅ MANEJO DE IMAGEN - POR AHORA SIN IMAGEN (SOLO JSON)
+            //  MANEJO DE IMAGEN - POR AHORA SIN IMAGEN (SOLO JSON)
             // En el futuro, si necesitas imágenes, puedes crear un endpoint separado para subir imágenes
 
             boolean success = productService.updateProduct(productId, product);
             if (success) {
-                System.out.println("✅ Producto ID " + productId + " actualizado exitosamente");
+                System.out.println(" Producto ID " + productId + " actualizado exitosamente");
 
                 ctx.contentType("application/json");
                 Map<String, Object> responseData = new HashMap<>();
@@ -298,7 +295,7 @@ public class ProductController {
                 ctx.status(404).json(new ApiResponse(false, "Producto no encontrado", null));
             }
         } catch (Exception e) {
-            System.err.println("❌ Error actualizando producto: " + e.getMessage());
+            System.err.println(" Error actualizando producto: " + e.getMessage());
             e.printStackTrace();
             ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error al actualizar producto", null));
@@ -334,7 +331,6 @@ public class ProductController {
         }
     }
 
-    // ✅ NUEVO MÉTODO PARA SUBIR IMAGEN POR SEPARADO (OPCIONAL)
     public void uploadProductImage(Context ctx) {
         try {
             int productId = Integer.parseInt(ctx.pathParam("id"));
@@ -353,7 +349,7 @@ public class ProductController {
                 return;
             }
 
-            System.out.println("📤 Subiendo imagen para producto ID: " + productId);
+            System.out.println(" Subiendo imagen para producto ID: " + productId);
             System.out.println("   - Archivo: " + uploadedFile.filename() + " (" + uploadedFile.size() + " bytes)");
 
             String newImageUrl = imageService.uploadImage(uploadedFile, "productos");
@@ -386,7 +382,7 @@ public class ProductController {
                 ctx.status(400).json(new ApiResponse(false, "Error al subir imagen a Cloudinary", null));
             }
         } catch (Exception e) {
-            System.err.println("❌ Error subiendo imagen: " + e.getMessage());
+            System.err.println(" Error subiendo imagen: " + e.getMessage());
             e.printStackTrace();
             ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error al subir imagen", null));
