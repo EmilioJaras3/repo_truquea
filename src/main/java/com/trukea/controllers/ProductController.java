@@ -79,15 +79,11 @@ public class ProductController {
     }
 
     public void debugProduct(Context ctx) {
-        try {
+        String sql = "SELECT id, nombre, usuario_id, descripcion, valor_estimado FROM productos WHERE id = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             int productId = Integer.parseInt(ctx.pathParam("id"));
 
-            System.out.println("🔍DEBUG: Consultando producto ID " + productId + " directamente en BD...");
-
-            Connection conn = DatabaseConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(
-                    "SELECT id, nombre, usuario_id, descripcion, valor_estimado FROM productos WHERE id = ?"
-            );
             stmt.setInt(1, productId);
 
             ResultSet rs = stmt.executeQuery();
@@ -99,19 +95,11 @@ public class ProductController {
                 debug.put("descripcion", rs.getString("descripcion"));
                 debug.put("valor_estimado", rs.getDouble("valor_estimado"));
 
-                System.out.println(" DEBUG: Producto encontrado - usuario_id: " + rs.getInt("usuario_id"));
-
-                ctx.contentType("application/json");
-                ctx.json(new ApiResponse(true, "Debug producto", debug));
-            } else {
-                System.out.println(" DEBUG: Producto no encontrado");
                 ctx.contentType("application/json");
                 ctx.status(404).json(new ApiResponse(false, "Producto no encontrado", null));
             }
-
-            conn.close();
         } catch (Exception e) {
-            System.err.println(" DEBUG ERROR: " + e.getMessage());
+
             e.printStackTrace();
             ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error: " + e.getMessage(), null));
@@ -120,103 +108,37 @@ public class ProductController {
 
     public void createProduct(Context ctx) {
         try {
-            System.out.println("🔍 === INICIANDO CREACIÓN DE PRODUCTO ===");
 
-            // LEER JSON EN LUGAR DE FORM-DATA
-            Map<String, Object> body = ctx.bodyAsClass(Map.class);
-            System.out.println("📨 Body recibido: " + body);
-
-            CreateProductRequestDTO request = new CreateProductRequestDTO();
-
-            //  EXTRAER DATOS DEL JSON
-            String nombreProducto = (String) body.get("nombreProducto");
-            String descripcionProducto = (String) body.get("descripcionProducto");
-
+            }
             request.setNombreProducto(nombreProducto);
-            request.setDescripcionProducto(descripcionProducto);
 
-            //  MANEJAR NÚMEROS CON CONVERSIÓN SEGURA
-            if (body.get("valorEstimado") != null) {
-                Object valorObj = body.get("valorEstimado");
-                if (valorObj instanceof Number) {
-                    request.setValorEstimado(((Number) valorObj).doubleValue());
-                } else if (valorObj instanceof String && !((String) valorObj).isEmpty()) {
-                    request.setValorEstimado(Double.parseDouble((String) valorObj));
-                }
-            }
-
-            if (body.get("idCategoria") != null) {
-                Object categoriaObj = body.get("idCategoria");
-                if (categoriaObj instanceof Number) {
-                    request.setIdCategoria(((Number) categoriaObj).intValue());
-                } else if (categoriaObj instanceof String && !((String) categoriaObj).isEmpty()) {
-                    request.setIdCategoria(Integer.parseInt((String) categoriaObj));
-                }
-            }
-
-            if (body.get("idCalidad") != null) {
-                Object calidadObj = body.get("idCalidad");
-                if (calidadObj instanceof Number) {
-                    request.setIdCalidad(((Number) calidadObj).intValue());
-                } else if (calidadObj instanceof String && !((String) calidadObj).isEmpty()) {
-                    request.setIdCalidad(Integer.parseInt((String) calidadObj));
-                }
-            }
-
-            if (body.get("usuario_id") != null) {
-                Object userIdObj = body.get("usuario_id");
-                if (userIdObj instanceof Number) {
-                    request.setUsuario_id(((Number) userIdObj).intValue());
-                } else if (userIdObj instanceof String && !((String) userIdObj).isEmpty()) {
-                    request.setUsuario_id(Integer.parseInt((String) userIdObj));
-                }
-            }
-
-            System.out.println(" Datos extraídos:");
-            System.out.println("   - Nombre: " + request.getNombreProducto());
-            System.out.println("   - Usuario ID: " + request.getUsuario_id());
-            System.out.println("   - Categoría ID: " + request.getIdCategoria());
-            System.out.println("   - Calidad ID: " + request.getIdCalidad());
-            System.out.println("   - Valor: " + request.getValorEstimado());
-
-            //  VALIDACIÓN
-            if (request.getNombreProducto() == null || request.getNombreProducto().trim().isEmpty() || request.getUsuario_id() == 0) {
-                System.out.println(" Faltan datos obligatorios");
-                ctx.contentType("application/json");
-                ctx.status(400).json(new ApiResponse(false, "Nombre del producto y usuario son obligatorios", null));
+            String usuarioIdStr = ctx.formParam("usuario_id");
+            if (usuarioIdStr == null) {
+                ctx.status(400).json(new ApiResponse(false, "ID de usuario es obligatorio", null));
                 return;
             }
+            request.setUsuario_id(Integer.parseInt(usuarioIdStr));
 
-            String imageUrl = null;
-            System.out.println(" Producto sin imagen (JSON mode)");
+            request.setDescripcionProducto(ctx.formParam("descripcionProducto"));
 
-            System.out.println(" Guardando en base de datos...");
+            String valorEstimadoStr = ctx.formParam("valorEstimado");
+            if (valorEstimadoStr != null) {
+                request.setValorEstimado(Double.parseDouble(valorEstimadoStr));
+            }
+
+
 
             int productId = productService.createProduct(request, imageUrl);
 
             if (productId > 0) {
-                System.out.println(" ¡PRODUCTO CREADO EXITOSAMENTE!");
-                System.out.println("   - Product ID: " + productId);
-                System.out.println("   - Nombre: " + request.getNombreProducto());
-                System.out.println("   - Usuario: " + request.getUsuario_id());
 
-                ctx.contentType("application/json");
-                ctx.status(201).json(new ApiResponse(true, "Producto creado exitosamente",
-                        Map.of("productId", productId, "imageUrl", imageUrl != null ? imageUrl : "")));
-            } else {
-                System.out.println(" Error: Base de datos no pudo crear el producto");
-                ctx.contentType("application/json");
                 ctx.status(500).json(new ApiResponse(false, "Error al crear producto en base de datos", null));
             }
-
-            System.out.println("🔄 === FIN CREACIÓN PRODUCTO ===");
-
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(new ApiResponse(false, "Error en el formato de los números. Asegúrate de que todos los campos numéricos sean válidos.", null));
         } catch (Exception e) {
-            System.out.println(" ERROR INESPERADO:");
-            System.out.println("   - Tipo: " + e.getClass().getSimpleName());
-            System.out.println("   - Mensaje: " + e.getMessage());
+
             e.printStackTrace();
-            ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error al crear producto: " + e.getMessage(), null));
         }
     }
@@ -224,81 +146,61 @@ public class ProductController {
     public void updateProduct(Context ctx) {
         try {
             int productId = Integer.parseInt(ctx.pathParam("id"));
-
             ProductDTO currentProduct = productService.getProductById(productId);
             if (currentProduct == null) {
-                ctx.contentType("application/json");
                 ctx.status(404).json(new ApiResponse(false, "Producto no encontrado", null));
                 return;
             }
 
-            //  LEER JSON EN LUGAR DE FORM-DATA
-            Map<String, Object> body = ctx.bodyAsClass(Map.class);
-            System.out.println("📨 Actualizando producto ID " + productId + " con data: " + body);
 
-            Product product = new Product();
-
-            //  EXTRAER DATOS DEL JSON
-            String nombre = (String) body.get("nombre");
-            String descripcion = (String) body.get("descripcion");
-
-            if (nombre != null && !nombre.trim().isEmpty()) {
-                product.setNombre(nombre);
+            // Leer campos de form-data
+            if (ctx.formParam("nombre") != null) {
+                productToUpdate.setNombre(ctx.formParam("nombre"));
+                hasFields = true;
             }
-            if (descripcion != null && !descripcion.trim().isEmpty()) {
-                product.setDescripcion(descripcion);
+            if (ctx.formParam("descripcion") != null) {
+                productToUpdate.setDescripcion(ctx.formParam("descripcion"));
+                hasFields = true;
             }
 
-            //  MANEJAR NÚMEROS
-            if (body.get("valorEstimado") != null) {
-                Object valorObj = body.get("valorEstimado");
-                if (valorObj instanceof Number) {
-                    product.setValorEstimado(((Number) valorObj).doubleValue());
-                } else if (valorObj instanceof String && !((String) valorObj).isEmpty()) {
-                    product.setValorEstimado(Double.parseDouble((String) valorObj));
+            }
+            if (ctx.formParam("categoria_id") != null) {
+                productToUpdate.setCategoriaId(Integer.parseInt(ctx.formParam("categoria_id")));
+                hasFields = true;
+            }
+            if (ctx.formParam("calidad_id") != null) {
+                productToUpdate.setCalidadId(Integer.parseInt(ctx.formParam("calidad_id")));
+                hasFields = true;
+            }
+
+            // Manejar la carga de la imagen
+            UploadedFile uploadedFile = ctx.uploadedFile("imagen");
+            if (uploadedFile != null) {
+                String newImageUrl = imageService.uploadImage(uploadedFile, "productos");
+                if (newImageUrl != null) {
+                    productToUpdate.setImagen(newImageUrl);
+                    // Opcional: eliminar imagen antigua de Cloudinary si existe
+                    if (currentProduct.getImagen() != null) {
+                        imageService.deleteImage(currentProduct.getImagen());
+                    }
                 }
+                hasFields = true;
             }
 
-            if (body.get("categoria_id") != null) {
-                Object categoriaObj = body.get("categoria_id");
-                if (categoriaObj instanceof Number) {
-                    product.setCategoriaId(((Number) categoriaObj).intValue());
-                } else if (categoriaObj instanceof String && !((String) categoriaObj).isEmpty()) {
-                    product.setCategoriaId(Integer.parseInt((String) categoriaObj));
-                }
-            }
 
-            if (body.get("calidad_id") != null) {
-                Object calidadObj = body.get("calidad_id");
-                if (calidadObj instanceof Number) {
-                    product.setCalidadId(((Number) calidadObj).intValue());
-                } else if (calidadObj instanceof String && !((String) calidadObj).isEmpty()) {
-                    product.setCalidadId(Integer.parseInt((String) calidadObj));
-                }
-            }
 
-            //  MANEJO DE IMAGEN - POR AHORA SIN IMAGEN (SOLO JSON)
-            // En el futuro, si necesitas imágenes, puedes crear un endpoint separado para subir imágenes
-
-            boolean success = productService.updateProduct(productId, product);
+            boolean success = productService.updateProduct(productId, productToUpdate);
             if (success) {
-                System.out.println(" Producto ID " + productId + " actualizado exitosamente");
 
-                ctx.contentType("application/json");
-                Map<String, Object> responseData = new HashMap<>();
-                String finalImageUrl = currentProduct.getImagen() != null ? currentProduct.getImagen() : "";
-                responseData.put("imageUrl", finalImageUrl);
-
-                ctx.json(new ApiResponse(true, "Producto actualizado exitosamente", responseData));
             } else {
-                ctx.contentType("application/json");
-                ctx.status(404).json(new ApiResponse(false, "Producto no encontrado", null));
+                ctx.status(500).json(new ApiResponse(false, "Error al actualizar el producto", null));
             }
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(new ApiResponse(false, "Error en el formato de los números.", null));
         } catch (Exception e) {
-            System.err.println(" Error actualizando producto: " + e.getMessage());
+
             e.printStackTrace();
-            ctx.contentType("application/json");
-            ctx.status(500).json(new ApiResponse(false, "Error al actualizar producto", null));
+            ctx.status(500).json(new ApiResponse(false, "Error interno al actualizar el producto.", null));
         }
     }
 

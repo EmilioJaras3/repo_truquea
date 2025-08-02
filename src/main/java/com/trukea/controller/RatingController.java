@@ -80,35 +80,33 @@ public class RatingController {
 
 
     public void getTopUsers(Context ctx) {
-        try {
-            String order = ctx.queryParam("order");
-            String limit = ctx.queryParam("limit");
+        String orderParam = ctx.queryParam("order");
+        String limitParam = ctx.queryParam("limit");
 
-            if (order == null) order = "desc";
-            if (limit == null) limit = "10";
+        String order = (orderParam == null) ? "desc" : orderParam;
+        int limit = (limitParam == null) ? 10 : Integer.parseInt(limitParam);
+        String orderBy = "desc".equals(order) ? "DESC" : "ASC";
 
-            String orderBy = order.equals("asc") ? "ASC" : "DESC";
+        String sql = "SELECT u.id, u.nombre, u.apellido, u.calificacion_promedio, " +
+                "COUNT(c.id) as total_calificaciones, " +
+                "COUNT(DISTINCT t.id) as total_trueques " +
+                "FROM usuarios u " +
+                "LEFT JOIN calificaciones c ON u.id = c.calificado_id " +
+                "LEFT JOIN trueques t ON (u.id = t.usuario_oferente_id OR u.id = t.usuario_receptor_id) " +
+                "WHERE u.calificacion_promedio > 0 " +
+                "GROUP BY u.id, u.nombre, u.apellido, u.calificacion_promedio " +
+                "HAVING total_calificaciones > 0 " +
+                "ORDER BY u.calificacion_promedio " + orderBy + ", total_calificaciones " + orderBy + " " +
+                "LIMIT ?";
 
-            Connection conn = DatabaseConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(
-                    "SELECT u.id, u.nombre, u.apellido, u.calificacion_promedio, " +
-                            "COUNT(c.id) as total_calificaciones, " +
-                            "COUNT(DISTINCT t.id) as total_trueques " +
-                            "FROM usuarios u " +
-                            "LEFT JOIN calificaciones c ON u.id = c.calificado_id " +
-                            "LEFT JOIN trueques t ON (u.id = t.usuario_oferente_id OR u.id = t.usuario_receptor_id) " +
-                            "WHERE u.calificacion_promedio > 0 " +
-                            "GROUP BY u.id, u.nombre, u.apellido, u.calificacion_promedio " +
-                            "HAVING total_calificaciones > 0 " +
-                            "ORDER BY u.calificacion_promedio " + orderBy + ", total_calificaciones " + orderBy + " " +
-                            "LIMIT ?"
-            );
-            stmt.setInt(1, Integer.parseInt(limit));
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
+            stmt.setInt(1, limit);
             ResultSet rs = stmt.executeQuery();
             List<Map<String, Object>> topUsers = new ArrayList<>();
-
             int posicion = 1;
+
             while (rs.next()) {
                 Map<String, Object> user = new HashMap<>();
                 user.put("posicion", posicion++);
@@ -122,12 +120,8 @@ public class RatingController {
                 topUsers.add(user);
             }
 
-            String mensaje = order.equals("desc") ?
-                    "Usuarios mejor calificados" :
-                    "Usuarios con menor calificación";
-
+            String mensaje = "desc".equals(order) ? "Usuarios mejor calificados" : "Usuarios con menor calificación";
             ctx.json(new ApiResponse(true, mensaje, Map.of("ranking", topUsers)));
-            conn.close();
 
         } catch (Exception e) {
             ctx.status(500).json(new ApiResponse(false, "Error del servidor", null));
@@ -136,34 +130,33 @@ public class RatingController {
     }
 
     public void getMostActiveUsers(Context ctx) {
-        try {
-            String limit = ctx.queryParam("limit");
-            if (limit == null) limit = "10";
+        String limitParam = ctx.queryParam("limit");
+        int limit = (limitParam == null) ? 10 : Integer.parseInt(limitParam);
 
-            Connection conn = DatabaseConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(
-                    "SELECT u.id, u.nombre, u.apellido, u.calificacion_promedio, " +
-                            "COUNT(DISTINCT CASE WHEN t.estado_id = 4 THEN t.id END) as trueques_completados, " +
-                            "COUNT(DISTINCT p.id) as total_productos, " +
-                            "COUNT(DISTINCT c.id) as calificaciones_dadas, " +
-                            "(COUNT(DISTINCT CASE WHEN t.estado_id = 4 THEN t.id END) * 3 + " +
-                            " COUNT(DISTINCT p.id) * 2 + " +
-                            " COUNT(DISTINCT c.id) * 1) as puntuacion_actividad " +
-                            "FROM usuarios u " +
-                            "LEFT JOIN trueques t ON (u.id = t.usuario_oferente_id OR u.id = t.usuario_receptor_id) " +
-                            "LEFT JOIN productos p ON u.id = p.usuario_id " +
-                            "LEFT JOIN calificaciones c ON u.id = c.calificador_id " +
-                            "GROUP BY u.id, u.nombre, u.apellido, u.calificacion_promedio " +
-                            "HAVING puntuacion_actividad > 0 " +
-                            "ORDER BY puntuacion_actividad DESC, trueques_completados DESC " +
-                            "LIMIT ?"
-            );
-            stmt.setInt(1, Integer.parseInt(limit));
+        String sql = "SELECT u.id, u.nombre, u.apellido, u.calificacion_promedio, " +
+                "COUNT(DISTINCT CASE WHEN t.estado_id = 4 THEN t.id END) as trueques_completados, " +
+                "COUNT(DISTINCT p.id) as total_productos, " +
+                "COUNT(DISTINCT c.id) as calificaciones_dadas, " +
+                "(COUNT(DISTINCT CASE WHEN t.estado_id = 4 THEN t.id END) * 3 + " +
+                " COUNT(DISTINCT p.id) * 2 + " +
+                " COUNT(DISTINCT c.id) * 1) as puntuacion_actividad " +
+                "FROM usuarios u " +
+                "LEFT JOIN trueques t ON (u.id = t.usuario_oferente_id OR u.id = t.usuario_receptor_id) " +
+                "LEFT JOIN productos p ON u.id = p.usuario_id " +
+                "LEFT JOIN calificaciones c ON u.id = c.calificador_id " +
+                "GROUP BY u.id, u.nombre, u.apellido, u.calificacion_promedio " +
+                "HAVING puntuacion_actividad > 0 " +
+                "ORDER BY puntuacion_actividad DESC, trueques_completados DESC " +
+                "LIMIT ?";
 
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, limit);
             ResultSet rs = stmt.executeQuery();
             List<Map<String, Object>> activeUsers = new ArrayList<>();
-
             int posicion = 1;
+
             while (rs.next()) {
                 Map<String, Object> user = new HashMap<>();
                 user.put("posicion", posicion++);
@@ -180,7 +173,6 @@ public class RatingController {
             }
 
             ctx.json(new ApiResponse(true, "Usuarios más activos", Map.of("ranking", activeUsers)));
-            conn.close();
 
         } catch (Exception e) {
             ctx.status(500).json(new ApiResponse(false, "Error del servidor", null));
@@ -189,22 +181,28 @@ public class RatingController {
     }
 
     public void getStatistics(Context ctx) {
-        try {
-            Connection conn = DatabaseConfig.getConnection();
-            Map<String, Object> stats = new HashMap<>();
+        Map<String, Object> stats = new HashMap<>();
+        String basicSql = "SELECT " +
+                "(SELECT COUNT(*) FROM usuarios) as total_usuarios, " +
+                "(SELECT COUNT(*) FROM productos WHERE disponible = true) as productos_disponibles, " +
+                "(SELECT COUNT(*) FROM trueques) as total_trueques, " +
+                "(SELECT COUNT(*) FROM trueques WHERE estado_id = 4) as trueques_completados, " +
+                "(SELECT COUNT(*) FROM calificaciones) as total_calificaciones, " +
+                "(SELECT COALESCE(AVG(puntuacion), 0) FROM calificaciones) as calificacion_promedio";
 
-            // Estadísticas básicas
-            PreparedStatement basicStmt = conn.prepareStatement(
-                    "SELECT " +
-                            "(SELECT COUNT(*) FROM usuarios) as total_usuarios, " +
-                            "(SELECT COUNT(*) FROM productos WHERE disponible = true) as productos_disponibles, " +
-                            "(SELECT COUNT(*) FROM trueques) as total_trueques, " +
-                            "(SELECT COUNT(*) FROM trueques WHERE estado_id = 4) as trueques_completados, " +
-                            "(SELECT COUNT(*) FROM calificaciones) as total_calificaciones, " +
-                            "(SELECT COALESCE(AVG(puntuacion), 0) FROM calificaciones) as calificacion_promedio"
-            );
+        String catSql = "SELECT c.nombre, COUNT(p.id) as cantidad " +
+                "FROM categorias c " +
+                "LEFT JOIN productos p ON c.id = p.categoria_id AND p.disponible = true " +
+                "GROUP BY c.id, c.nombre " +
+                "ORDER BY cantidad DESC " +
+                "LIMIT 5";
 
-            ResultSet basicRs = basicStmt.executeQuery();
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement basicStmt = conn.prepareStatement(basicSql);
+             ResultSet basicRs = basicStmt.executeQuery();
+             PreparedStatement catStmt = conn.prepareStatement(catSql);
+             ResultSet catRs = catStmt.executeQuery()) {
+
             if (basicRs.next()) {
                 stats.put("total_usuarios", basicRs.getInt("total_usuarios"));
                 stats.put("productos_disponibles", basicRs.getInt("productos_disponibles"));
@@ -214,30 +212,16 @@ public class RatingController {
                 stats.put("calificacion_promedio_general", Math.round(basicRs.getDouble("calificacion_promedio") * 100.0) / 100.0);
             }
 
-            // Top categorías
-            PreparedStatement catStmt = conn.prepareStatement(
-                    "SELECT c.nombre, COUNT(p.id) as cantidad " +
-                            "FROM categorias c " +
-                            "LEFT JOIN productos p ON c.id = p.categoria_id AND p.disponible = true " +
-                            "GROUP BY c.id, c.nombre " +
-                            "ORDER BY cantidad DESC " +
-                            "LIMIT 5"
-            );
-
-            ResultSet catRs = catStmt.executeQuery();
             List<Map<String, Object>> topCategorias = new ArrayList<>();
-
             while (catRs.next()) {
                 Map<String, Object> categoria = new HashMap<>();
                 categoria.put("nombre", catRs.getString("nombre"));
                 categoria.put("cantidad_productos", catRs.getInt("cantidad"));
                 topCategorias.add(categoria);
             }
-
             stats.put("top_categorias", topCategorias);
 
             ctx.json(new ApiResponse(true, "Estadísticas generales", stats));
-            conn.close();
 
         } catch (Exception e) {
             ctx.status(500).json(new ApiResponse(false, "Error del servidor", null));

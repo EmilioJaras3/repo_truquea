@@ -10,26 +10,23 @@ public class ProductRepository {
 
     public List<Product> findAll() {
         List<Product> products = new ArrayList<>();
-        try {
-            Connection conn = DatabaseConfig.getConnection();
-            String query = "SELECT p.*, c.nombre as categoria_nombre, cal.nombre as calidad_nombre, " +
-                    "u.nombre as usuario_nombre, u.apellido as usuario_apellido, " +
-                    "ci.nombre as ciudad_nombre " +
-                    "FROM productos p " +
-                    "LEFT JOIN categorias c ON p.categoria_id = c.id " +
-                    "LEFT JOIN calidades cal ON p.calidad_id = cal.id " +
-                    "LEFT JOIN usuarios u ON p.usuario_id = u.id " +
-                    "LEFT JOIN ciudades ci ON u.ciudad_id = ci.id " +
-                    "WHERE p.disponible = true ORDER BY p.created_at DESC";
+        String query = "SELECT p.*, c.nombre as categoria_nombre, cal.nombre as calidad_nombre, " +
+                "u.nombre as usuario_nombre, u.apellido as usuario_apellido, " +
+                "ci.nombre as ciudad_nombre " +
+                "FROM productos p " +
+                "LEFT JOIN categorias c ON p.categoria_id = c.id " +
+                "LEFT JOIN calidades cal ON p.calidad_id = cal.id " +
+                "LEFT JOIN usuarios u ON p.usuario_id = u.id " +
+                "LEFT JOIN ciudades ci ON u.ciudad_id = ci.id " +
+                "WHERE p.disponible = true ORDER BY p.created_at DESC";
 
-            PreparedStatement stmt = conn.prepareStatement(query);
-            ResultSet rs = stmt.executeQuery();
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 products.add(mapResultSetToProduct(rs));
             }
-
-            conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -38,38 +35,35 @@ public class ProductRepository {
 
     public List<Product> findByFilters(String categoria, String ciudad, Integer usuarioId) {
         List<Product> products = new ArrayList<>();
-        try {
-            StringBuilder sql = new StringBuilder(
-                    "SELECT p.*, c.nombre as categoria_nombre, cal.nombre as calidad_nombre, " +
-                            "u.nombre as usuario_nombre, u.apellido as usuario_apellido, " +
-                            "ci.nombre as ciudad_nombre " +
-                            "FROM productos p " +
-                            "LEFT JOIN categorias c ON p.categoria_id = c.id " +
-                            "LEFT JOIN calidades cal ON p.calidad_id = cal.id " +
-                            "LEFT JOIN usuarios u ON p.usuario_id = u.id " +
-                            "LEFT JOIN ciudades ci ON u.ciudad_id = ci.id " +
-                            "WHERE p.disponible = true"
-            );
+        StringBuilder sql = new StringBuilder(
+                "SELECT p.*, c.nombre as categoria_nombre, cal.nombre as calidad_nombre, " +
+                        "u.nombre as usuario_nombre, u.apellido as usuario_apellido, " +
+                        "ci.nombre as ciudad_nombre " +
+                        "FROM productos p " +
+                        "LEFT JOIN categorias c ON p.categoria_id = c.id " +
+                        "LEFT JOIN calidades cal ON p.calidad_id = cal.id " +
+                        "LEFT JOIN usuarios u ON p.usuario_id = u.id " +
+                        "LEFT JOIN ciudades ci ON u.ciudad_id = ci.id " +
+                        "WHERE p.disponible = true"
+        );
 
-            List<Object> params = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        if (categoria != null && !categoria.isEmpty()) {
+            sql.append(" AND c.nombre = ?");
+            params.add(categoria);
+        }
+        if (ciudad != null && !ciudad.isEmpty()) {
+            sql.append(" AND ci.nombre = ?");
+            params.add(ciudad);
+        }
+        if (usuarioId != null) {
+            sql.append(" AND p.usuario_id != ?");
+            params.add(usuarioId);
+        }
+        sql.append(" ORDER BY p.created_at DESC");
 
-            if (categoria != null && !categoria.isEmpty()) {
-                sql.append(" AND c.nombre = ?");
-                params.add(categoria);
-            }
-            if (ciudad != null && !ciudad.isEmpty()) {
-                sql.append(" AND ci.nombre = ?");
-                params.add(ciudad);
-            }
-            if (usuarioId != null) {
-                sql.append(" AND p.usuario_id != ?");
-                params.add(usuarioId);
-            }
-
-            sql.append(" ORDER BY p.created_at DESC");
-
-            Connection conn = DatabaseConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql.toString());
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
             for (int i = 0; i < params.size(); i++) {
                 stmt.setObject(i + 1, params.get(i));
@@ -79,8 +73,6 @@ public class ProductRepository {
             while (rs.next()) {
                 products.add(mapResultSetToProduct(rs));
             }
-
-            conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -89,23 +81,20 @@ public class ProductRepository {
 
     public List<Product> findByUserId(int userId) {
         List<Product> products = new ArrayList<>();
-        try {
-            Connection conn = DatabaseConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(
-                    "SELECT p.*, c.nombre as categoria_nombre, cal.nombre as calidad_nombre " +
-                            "FROM productos p " +
-                            "LEFT JOIN categorias c ON p.categoria_id = c.id " +
-                            "LEFT JOIN calidades cal ON p.calidad_id = cal.id " +
-                            "WHERE p.usuario_id = ? ORDER BY p.created_at DESC"
-            );
+        String sql = "SELECT p.*, c.nombre as categoria_nombre, cal.nombre as calidad_nombre " +
+                "FROM productos p " +
+                "LEFT JOIN categorias c ON p.categoria_id = c.id " +
+                "LEFT JOIN calidades cal ON p.calidad_id = cal.id " +
+                "WHERE p.usuario_id = ? ORDER BY p.created_at DESC";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
 
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 products.add(mapResultSetToProduct(rs));
             }
-
-            conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -113,29 +102,22 @@ public class ProductRepository {
     }
 
     public Product findById(int id) {
-        try {
-            Connection conn = DatabaseConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(
-                    "SELECT p.*, c.nombre as categoria_nombre, cal.nombre as calidad_nombre, " +
-                            "u.nombre as usuario_nombre, u.apellido as usuario_apellido, " +
-                            "ci.nombre as ciudad_nombre " +
-                            "FROM productos p " +
-                            "LEFT JOIN categorias c ON p.categoria_id = c.id " +
-                            "LEFT JOIN calidades cal ON p.calidad_id = cal.id " +
-                            "LEFT JOIN usuarios u ON p.usuario_id = u.id " +
-                            "LEFT JOIN ciudades ci ON u.ciudad_id = ci.id " +
-                            "WHERE p.id = ?"
-            );
+        String sql = "SELECT p.*, c.nombre as categoria_nombre, cal.nombre as calidad_nombre, " +
+                "u.nombre as usuario_nombre, u.apellido as usuario_apellido, " +
+                "ci.nombre as ciudad_nombre " +
+                "FROM productos p " +
+                "LEFT JOIN categorias c ON p.categoria_id = c.id " +
+                "LEFT JOIN calidades cal ON p.calidad_id = cal.id " +
+                "LEFT JOIN usuarios u ON p.usuario_id = u.id " +
+                "LEFT JOIN ciudades ci ON u.ciudad_id = ci.id " +
+                "WHERE p.id = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
-
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                Product product = mapResultSetToProduct(rs);
-                conn.close();
-                return product;
+                return mapResultSetToProduct(rs);
             }
-
-            conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -143,13 +125,10 @@ public class ProductRepository {
     }
 
     public int save(Product product) {
-        try {
-            Connection conn = DatabaseConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(
-                    "INSERT INTO productos (nombre, descripcion, valor_estimado, imagen, categoria_id, calidad_id, usuario_id) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    Statement.RETURN_GENERATED_KEYS
-            );
+        String sql = "INSERT INTO productos (nombre, descripcion, valor_estimado, imagen, categoria_id, calidad_id, usuario_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, product.getNombre());
             stmt.setString(2, product.getDescripcion());
             stmt.setDouble(3, product.getValorEstimado());
@@ -160,15 +139,12 @@ public class ProductRepository {
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
-                ResultSet generatedKeys = stmt.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    int productId = generatedKeys.getInt(1);
-                    conn.close();
-                    return productId;
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        return generatedKeys.getInt(1);
+                    }
                 }
             }
-
-            conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -176,59 +152,55 @@ public class ProductRepository {
     }
 
     public boolean update(int id, Product product) {
-        try {
-            StringBuilder sql = new StringBuilder("UPDATE productos SET ");
-            List<Object> params = new ArrayList<>();
-            boolean hasFields = false;
+        StringBuilder sql = new StringBuilder("UPDATE productos SET ");
+        List<Object> params = new ArrayList<>();
+        boolean hasFields = false;
 
-            if (product.getNombre() != null && !product.getNombre().isEmpty()) {
-                sql.append("nombre = ?, ");
-                params.add(product.getNombre());
-                hasFields = true;
-            }
-            if (product.getDescripcion() != null && !product.getDescripcion().isEmpty()) {
-                sql.append("descripcion = ?, ");
-                params.add(product.getDescripcion());
-                hasFields = true;
-            }
-            if (product.getValorEstimado() > 0) {
-                sql.append("valor_estimado = ?, ");
-                params.add(product.getValorEstimado());
-                hasFields = true;
-            }
-            if (product.getCategoriaId() != 0) {
-                sql.append("categoria_id = ?, ");
-                params.add(product.getCategoriaId());
-                hasFields = true;
-            }
-            if (product.getCalidadId() != 0) {
-                sql.append("calidad_id = ?, ");
-                params.add(product.getCalidadId());
-                hasFields = true;
-            }
-            if (product.getImagen() != null && !product.getImagen().isEmpty()) {
-                sql.append("imagen = ?, ");
-                params.add(product.getImagen());
-                hasFields = true;
-            }
+        if (product.getNombre() != null && !product.getNombre().isEmpty()) {
+            sql.append("nombre = ?, ");
+            params.add(product.getNombre());
+            hasFields = true;
+        }
+        if (product.getDescripcion() != null && !product.getDescripcion().isEmpty()) {
+            sql.append("descripcion = ?, ");
+            params.add(product.getDescripcion());
+            hasFields = true;
+        }
+        if (product.getValorEstimado() > 0) {
+            sql.append("valor_estimado = ?, ");
+            params.add(product.getValorEstimado());
+            hasFields = true;
+        }
+        if (product.getCategoriaId() != 0) {
+            sql.append("categoria_id = ?, ");
+            params.add(product.getCategoriaId());
+            hasFields = true;
+        }
+        if (product.getCalidadId() != 0) {
+            sql.append("calidad_id = ?, ");
+            params.add(product.getCalidadId());
+            hasFields = true;
+        }
+        if (product.getImagen() != null && !product.getImagen().isEmpty()) {
+            sql.append("imagen = ?, ");
+            params.add(product.getImagen());
+            hasFields = true;
+        }
 
-            if (!hasFields) {
-                return false;
-            }
+        if (!hasFields) {
+            return false;
+        }
 
-            sql.setLength(sql.length() - 2);
-            sql.append(" WHERE id = ?");
-            params.add(id);
+        sql.setLength(sql.length() - 2);
+        sql.append(" WHERE id = ?");
+        params.add(id);
 
-            Connection conn = DatabaseConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql.toString());
-
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 stmt.setObject(i + 1, params.get(i));
             }
-
             int affectedRows = stmt.executeUpdate();
-            conn.close();
             return affectedRows > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -237,36 +209,19 @@ public class ProductRepository {
     }
 
     public boolean deleteById(int id) {
-        try {
-            Connection conn = DatabaseConfig.getConnection();
+        String checkSql = "SELECT COUNT(*) as count FROM trueques WHERE (producto_ofrecido_id = ? OR producto_deseado_id = ?) AND estado_id IN (1, 2)";
+        String deleteSql = "DELETE FROM productos WHERE id = ?";
 
-            PreparedStatement checkStmt = conn.prepareStatement(
-                    "SELECT COUNT(*) as count FROM trueques WHERE " +
-                            "(producto_ofrecido_id = ? OR producto_deseado_id = ?) " +
-                            "AND estado_id IN (1, 2)" // 1=Pendiente, 2=Aceptado
-            );
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+
+
             checkStmt.setInt(1, id);
             checkStmt.setInt(2, id);
-
             ResultSet rs = checkStmt.executeQuery();
             if (rs.next() && rs.getInt("count") > 0) {
-                System.out.println(" No se puede eliminar producto ID " + id + ": Tiene trueques activos");
-                conn.close();
-                return false;
+
             }
-
-            PreparedStatement stmt = conn.prepareStatement("DELETE FROM productos WHERE id = ?");
-            stmt.setInt(1, id);
-
-            int affectedRows = stmt.executeUpdate();
-            conn.close();
-
-            if (affectedRows > 0) {
-                System.out.println("Producto ID " + id + " eliminado exitosamente");
-            }
-
-            return affectedRows > 0;
-
         } catch (SQLException e) {
             System.err.println(" Error eliminando producto ID " + id + ": " + e.getMessage());
             e.printStackTrace();
