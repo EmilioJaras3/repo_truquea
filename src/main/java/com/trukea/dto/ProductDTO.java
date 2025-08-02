@@ -13,6 +13,7 @@ public class ProductDTO {
     private String ciudadNombre;
     private boolean disponible;
 
+    // ✅ AGREGAR ESTE CAMPO
     private int usuarioId;
 
     // Constructores
@@ -42,6 +43,7 @@ public class ProductDTO {
     public boolean isDisponible() { return disponible; }
     public void setDisponible(boolean disponible) { this.disponible = disponible; }
 
+    // ✅ NUEVO GETTER Y SETTER
     public int getUsuarioId() { return usuarioId; }
     public void setUsuarioId(int usuarioId) { this.usuarioId = usuarioId; }
 }

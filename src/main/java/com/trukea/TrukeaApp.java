@@ -18,10 +18,10 @@ public class TrukeaApp {
 
         int port = Integer.parseInt(System.getenv("PORT") != null ? System.getenv("PORT") : "3000");
 
-        //  CREAR APLICACIÓN JAVALIN SIN CORS PLUGIN (más compatible)
+        // ✅ CREAR APLICACIÓN JAVALIN SIN CORS PLUGIN (más compatible)
         Javalin app = Javalin.create().start(port);
 
-        //  CORS MANUAL MÁS AGRESIVO - DEBE IR ANTES DE TODAS LAS RUTAS
+        // ✅ CORS MANUAL MÁS AGRESIVO - DEBE IR ANTES DE TODAS LAS RUTAS
         app.before("/*", ctx -> {
             // Headers CORS más completos
             ctx.header("Access-Control-Allow-Origin", "*");
@@ -35,9 +35,9 @@ public class TrukeaApp {
             System.out.println("🔗 Origin: " + ctx.header("Origin"));
         });
 
-        //  MANEJAR TODAS LAS REQUESTS OPTIONS (PREFLIGHT)
+        // ✅ MANEJAR TODAS LAS REQUESTS OPTIONS (PREFLIGHT)
         app.options("*", ctx -> {
-            System.out.println(" Manejando preflight OPTIONS para: " + ctx.path());
+            System.out.println("✅ Manejando preflight OPTIONS para: " + ctx.path());
             ctx.status(200);
             ctx.result(""); // Respuesta vacía
         });
@@ -51,10 +51,10 @@ public class TrukeaApp {
         // Configurar rutas
         setupRoutes(app);
 
-        System.out.println(" Servidor Trukea API corriendo en puerto " + port);
-        System.out.println(" Test: http://localhost:" + port + "/api/test");
-        System.out.println("Cloudinary: do4nedzix");
-        System.out.println(" CORS habilitado para todos los orígenes");
+        System.out.println("🚀 Servidor Trukea API corriendo en puerto " + port);
+        System.out.println("🔗 Test: http://localhost:" + port + "/api/test");
+        System.out.println("☁️ Cloudinary: do4nedzix");
+        System.out.println("🌐 CORS habilitado para todos los orígenes");
     }
 
     private static void setupRoutes(Javalin app) {
@@ -92,14 +92,14 @@ public class TrukeaApp {
         // Rutas de ciudades
         app.get("/api/cities", cityController::getAllCities);
 
-        //  RUTAS DE TRUEQUES - Con manejo de errores mejorado
+        // ✅ RUTAS DE TRUEQUES - Con manejo de errores mejorado
         app.post("/api/trades/propose", ctx -> {
             try {
-                System.out.println(" === PROPUESTA DE TRUEQUE ===");
-                System.out.println(" Método: " + ctx.method());
-                System.out.println(" Origin: " + ctx.header("Origin"));
-                System.out.println(" Content-Type: " + ctx.header("Content-Type"));
-                System.out.println(" Body: " + ctx.body());
+                System.out.println("🔄 === PROPUESTA DE TRUEQUE ===");
+                System.out.println("📨 Método: " + ctx.method());
+                System.out.println("🌐 Origin: " + ctx.header("Origin"));
+                System.out.println("📋 Content-Type: " + ctx.header("Content-Type"));
+                System.out.println("📄 Body: " + ctx.body());
                 System.out.println("===============================");
 
                 // Verificar que no sea preflight
@@ -112,7 +112,7 @@ public class TrukeaApp {
                 tradeController.proposeTrade(ctx);
 
             } catch (Exception e) {
-                System.err.println(" Error en proposeTrade: " + e.getMessage());
+                System.err.println("❌ Error en proposeTrade: " + e.getMessage());
                 e.printStackTrace();
                 ctx.status(500).json(new ApiResponse(false, "Error interno del servidor: " + e.getMessage(), null));
             }

@@ -83,7 +83,6 @@ public class ProductController {
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             int productId = Integer.parseInt(ctx.pathParam("id"));
-
             stmt.setInt(1, productId);
 
             ResultSet rs = stmt.executeQuery();
@@ -94,12 +93,13 @@ public class ProductController {
                 debug.put("usuario_id", rs.getInt("usuario_id"));
                 debug.put("descripcion", rs.getString("descripcion"));
                 debug.put("valor_estimado", rs.getDouble("valor_estimado"));
-
+                ctx.contentType("application/json");
+                ctx.json(new ApiResponse(true, "Debug producto", debug));
+            } else {
                 ctx.contentType("application/json");
                 ctx.status(404).json(new ApiResponse(false, "Producto no encontrado", null));
             }
         } catch (Exception e) {
-
             e.printStackTrace();
             ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error: " + e.getMessage(), null));
@@ -108,7 +108,12 @@ public class ProductController {
 
     public void createProduct(Context ctx) {
         try {
+            CreateProductRequestDTO request = new CreateProductRequestDTO();
 
+            String nombreProducto = ctx.formParam("nombreProducto");
+            if (nombreProducto == null || nombreProducto.trim().isEmpty()) {
+                ctx.status(400).json(new ApiResponse(false, "Nombre del producto es obligatorio", null));
+                return;
             }
             request.setNombreProducto(nombreProducto);
 
@@ -126,18 +131,37 @@ public class ProductController {
                 request.setValorEstimado(Double.parseDouble(valorEstimadoStr));
             }
 
+            String idCategoriaStr = ctx.formParam("idCategoria");
+            if (idCategoriaStr != null) {
+                request.setIdCategoria(Integer.parseInt(idCategoriaStr));
+            }
 
+            String idCalidadStr = ctx.formParam("idCalidad");
+            if (idCalidadStr != null) {
+                request.setIdCalidad(Integer.parseInt(idCalidadStr));
+            }
+
+            UploadedFile uploadedFile = ctx.uploadedFile("imagen");
+            String imageUrl = null;
+            if (uploadedFile != null) {
+                imageUrl = imageService.uploadImage(uploadedFile, "productos");
+                if (imageUrl == null) {
+                    ctx.status(500).json(new ApiResponse(false, "Error al subir la imagen", null));
+                    return;
+                }
+            }
 
             int productId = productService.createProduct(request, imageUrl);
 
             if (productId > 0) {
-
+                ctx.status(201).json(new ApiResponse(true, "Producto creado exitosamente",
+                        Map.of("productId", productId, "imageUrl", imageUrl != null ? imageUrl : "")));
+            } else {
                 ctx.status(500).json(new ApiResponse(false, "Error al crear producto en base de datos", null));
             }
         } catch (NumberFormatException e) {
             ctx.status(400).json(new ApiResponse(false, "Error en el formato de los números. Asegúrate de que todos los campos numéricos sean válidos.", null));
         } catch (Exception e) {
-
             e.printStackTrace();
             ctx.status(500).json(new ApiResponse(false, "Error al crear producto: " + e.getMessage(), null));
         }
@@ -152,6 +176,8 @@ public class ProductController {
                 return;
             }
 
+            Product productToUpdate = new Product();
+            boolean hasFields = false;
 
             // Leer campos de form-data
             if (ctx.formParam("nombre") != null) {
@@ -162,7 +188,9 @@ public class ProductController {
                 productToUpdate.setDescripcion(ctx.formParam("descripcion"));
                 hasFields = true;
             }
-
+            if (ctx.formParam("valorEstimado") != null) {
+                productToUpdate.setValorEstimado(Double.parseDouble(ctx.formParam("valorEstimado")));
+                hasFields = true;
             }
             if (ctx.formParam("categoria_id") != null) {
                 productToUpdate.setCategoriaId(Integer.parseInt(ctx.formParam("categoria_id")));
@@ -187,18 +215,20 @@ public class ProductController {
                 hasFields = true;
             }
 
-
+            if (!hasFields) {
+                ctx.status(400).json(new ApiResponse(false, "No se proporcionaron campos para actualizar", null));
+                return;
+            }
 
             boolean success = productService.updateProduct(productId, productToUpdate);
             if (success) {
-
+                ctx.json(new ApiResponse(true, "Producto actualizado exitosamente", null));
             } else {
                 ctx.status(500).json(new ApiResponse(false, "Error al actualizar el producto", null));
             }
         } catch (NumberFormatException e) {
             ctx.status(400).json(new ApiResponse(false, "Error en el formato de los números.", null));
         } catch (Exception e) {
-
             e.printStackTrace();
             ctx.status(500).json(new ApiResponse(false, "Error interno al actualizar el producto.", null));
         }
@@ -233,6 +263,7 @@ public class ProductController {
         }
     }
 
+    // ✅ NUEVO MÉTODO PARA SUBIR IMAGEN POR SEPARADO (OPCIONAL)
     public void uploadProductImage(Context ctx) {
         try {
             int productId = Integer.parseInt(ctx.pathParam("id"));
@@ -251,7 +282,7 @@ public class ProductController {
                 return;
             }
 
-            System.out.println(" Subiendo imagen para producto ID: " + productId);
+            System.out.println("📤 Subiendo imagen para producto ID: " + productId);
             System.out.println("   - Archivo: " + uploadedFile.filename() + " (" + uploadedFile.size() + " bytes)");
 
             String newImageUrl = imageService.uploadImage(uploadedFile, "productos");
@@ -284,7 +315,7 @@ public class ProductController {
                 ctx.status(400).json(new ApiResponse(false, "Error al subir imagen a Cloudinary", null));
             }
         } catch (Exception e) {
-            System.err.println(" Error subiendo imagen: " + e.getMessage());
+            System.err.println("❌ Error subiendo imagen: " + e.getMessage());
             e.printStackTrace();
             ctx.contentType("application/json");
             ctx.status(500).json(new ApiResponse(false, "Error al subir imagen", null));

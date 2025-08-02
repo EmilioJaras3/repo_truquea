@@ -215,15 +215,24 @@ public class ProductRepository {
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
 
-
             checkStmt.setInt(1, id);
             checkStmt.setInt(2, id);
             ResultSet rs = checkStmt.executeQuery();
             if (rs.next() && rs.getInt("count") > 0) {
+                System.out.println("❌ No se puede eliminar producto ID " + id + ": Tiene trueques activos");
+                return false;
+            }
 
+            try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql)) {
+                deleteStmt.setInt(1, id);
+                int affectedRows = deleteStmt.executeUpdate();
+                if (affectedRows > 0) {
+                    System.out.println("✅ Producto ID " + id + " eliminado exitosamente");
+                    return true;
+                }
             }
         } catch (SQLException e) {
-            System.err.println(" Error eliminando producto ID " + id + ": " + e.getMessage());
+            System.err.println("❌ Error eliminando producto ID " + id + ": " + e.getMessage());
             e.printStackTrace();
         }
         return false;
