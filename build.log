@@ -1,0 +1,165 @@
+Starting a Gradle Daemon, 1 busy Daemon could not be reused, use --status for details
+> Task :clean
+
+> Task :compileJava
+/app/src/main/java/com/trukea/repository/UserRepository.java:83: error: cannot find symbol
+        List<Object> params = new ArrayList<>();
+        ^
+  symbol:   class List
+  location: class UserRepository
+/app/src/main/java/com/trukea/repository/UserRepository.java:83: error: cannot find symbol
+        List<Object> params = new ArrayList<>();
+                                  ^
+  symbol:   class ArrayList
+  location: class UserRepository
+/app/src/main/java/com/trukea/controllers/ProductController.java:114: error: method formParam in interface Context cannot be applied to given types;
+            String nombreProducto = ctx.formParam("nombreProducto", "");
+                                       ^
+  required: String
+  found:    String,String
+  reason: actual and formal argument lists differ in length
+/app/src/main/java/com/trukea/controllers/ProductController.java:115: error: method formParam in interface Context cannot be applied to given types;
+            String descripcionProducto = ctx.formParam("descripcionProducto", "");
+                                            ^
+  required: String
+  found:    String,String
+  reason: actual and formal argument lists differ in length
+/app/src/main/java/com/trukea/controllers/ProductController.java:116: error: method formParam in interface Context cannot be applied to given types;
+            String valorEstimadoStr = ctx.formParam("valorEstimado", "0");
+                                         ^
+  required: String
+  found:    String,String
+  reason: actual and formal argument lists differ in length
+/app/src/main/java/com/trukea/controllers/ProductController.java:117: error: method formParam in interface Context cannot be applied to given types;
+            String idCategoriaStr = ctx.formParam("idCategoria", "0");
+                                       ^
+  required: String
+  found:    String,String
+  reason: actual and formal argument lists differ in length
+/app/src/main/java/com/trukea/controllers/ProductController.java:118: error: method formParam in interface Context cannot be applied to given types;
+            String idCalidadStr = ctx.formParam("idCalidad", "0");
+                                     ^
+  required: String
+  found:    String,String
+  reason: actual and formal argument lists differ in length
+/app/src/main/java/com/trukea/controllers/ProductController.java:119: error: method formParam in interface Context cannot be applied to given types;
+            String usuarioIdStr = ctx.formParam("usuario_id", "0");
+                                     ^
+  required: String
+  found:    String,String
+  reason: actual and formal argument lists differ in length
+/app/src/main/java/com/trukea/controller/RatingController.java:83: error: method queryParam in interface Context cannot be applied to given types;
+        String order = ctx.queryParam("order", "desc");
+                          ^
+  required: String
+  found:    String,String
+  reason: actual and formal argument lists differ in length
+/app/src/main/java/com/trukea/controller/RatingController.java:84: error: method queryParam in interface Context cannot be applied to given types;
+        int limit = Integer.parseInt(ctx.queryParam("limit", "10"));
+                                        ^
+  required: String
+  found:    String,String
+  reason: actual and formal argument lists differ in length
+/app/src/main/java/com/trukea/controller/RatingController.java:130: error: method queryParam in interface Context cannot be applied to given types;
+        int limit = Integer.parseInt(ctx.queryParam("limit", "10"));
+                                        ^
+  required: String
+  found:    String,String
+  reason: actual and formal argument lists differ in length
+Note: /app/src/main/java/com/trukea/config/CloudinaryConfig.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+11 errors
+
+> Task :compileJava FAILED
+
+[Incubating] Problems report is available at: file:///app/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler output below.
+  /app/src/main/java/com/trukea/repository/UserRepository.java:83: error: cannot find symbol
+          List<Object> params = new ArrayList<>();
+          ^
+    symbol:   class List
+    location: class UserRepository
+  /app/src/main/java/com/trukea/repository/UserRepository.java:83: error: cannot find symbol
+          List<Object> params = new ArrayList<>();
+                                    ^
+    symbol:   class ArrayList
+    location: class UserRepository
+  /app/src/main/java/com/trukea/controllers/ProductController.java:114: error: method formParam in interface Context cannot be applied to given types;
+              String nombreProducto = ctx.formParam("nombreProducto", "");
+                                         ^
+    required: String
+    found:    String,String
+    reason: actual and formal argument lists differ in length
+  /app/src/main/java/com/trukea/controllers/ProductController.java:115: error: method formParam in interface Context cannot be applied to given types;
+              String descripcionProducto = ctx.formParam("descripcionProducto", "");
+                                              ^
+    required: String
+    found:    String,String
+    reason: actual and formal argument lists differ in length
+  /app/src/main/java/com/trukea/controllers/ProductController.java:116: error: method formParam in interface Context cannot be applied to given types;
+              String valorEstimadoStr = ctx.formParam("valorEstimado", "0");
+                                           ^
+    required: String
+    found:    String,String
+    reason: actual and formal argument lists differ in length
+  /app/src/main/java/com/trukea/controllers/ProductController.java:117: error: method formParam in interface Context cannot be applied to given types;
+              String idCategoriaStr = ctx.formParam("idCategoria", "0");
+                                         ^
+    required: String
+    found:    String,String
+    reason: actual and formal argument lists differ in length
+  /app/src/main/java/com/trukea/controllers/ProductController.java:118: error: method formParam in interface Context cannot be applied to given types;
+              String idCalidadStr = ctx.formParam("idCalidad", "0");
+                                       ^
+    required: String
+    found:    String,String
+    reason: actual and formal argument lists differ in length
+  /app/src/main/java/com/trukea/controllers/ProductController.java:119: error: method formParam in interface Context cannot be applied to given types;
+              String usuarioIdStr = ctx.formParam("usuario_id", "0");
+                                       ^
+    required: String
+    found:    String,String
+    reason: actual and formal argument lists differ in length
+  /app/src/main/java/com/trukea/controller/RatingController.java:83: error: method queryParam in interface Context cannot be applied to given types;
+          String order = ctx.queryParam("order", "desc");
+                            ^
+    required: String
+    found:    String,String
+    reason: actual and formal argument lists differ in length
+  /app/src/main/java/com/trukea/controller/RatingController.java:84: error: method queryParam in interface Context cannot be applied to given types;
+          int limit = Integer.parseInt(ctx.queryParam("limit", "10"));
+                                          ^
+    required: String
+    found:    String,String
+    reason: actual and formal argument lists differ in length
+  /app/src/main/java/com/trukea/controller/RatingController.java:130: error: method queryParam in interface Context cannot be applied to given types;
+          int limit = Integer.parseInt(ctx.queryParam("limit", "10"));
+                                          ^
+    required: String
+    found:    String,String
+    reason: actual and formal argument lists differ in length
+  Note: /app/src/main/java/com/trukea/config/CloudinaryConfig.java uses or overrides a deprecated API.
+  Note: Recompile with -Xlint:deprecation for details.
+  Note: Some input files use unchecked or unsafe operations.
+  Note: Recompile with -Xlint:unchecked for details.
+  11 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.13/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 13s
+2 actionable tasks: 2 executed

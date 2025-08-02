@@ -11,11 +11,11 @@ import java.util.Map;
 public class CityController {
 
     public void getAllCities(Context ctx) {
-        try {
-            Connection conn = DatabaseConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement("SELECT * FROM ciudades ORDER BY nombre");
+        String sql = "SELECT * FROM ciudades ORDER BY nombre";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
 
-            ResultSet rs = stmt.executeQuery();
             List<Map<String, Object>> cities = new ArrayList<>();
             while (rs.next()) {
                 cities.add(Map.of(
@@ -23,9 +23,7 @@ public class CityController {
                         "nombre", rs.getString("nombre")
                 ));
             }
-
             ctx.json(new ApiResponse(true, "Ciudades obtenidas", Map.of("cities", cities)));
-            conn.close();
         } catch (Exception e) {
             ctx.status(500).json(new ApiResponse(false, "Error del servidor", null));
             e.printStackTrace();
