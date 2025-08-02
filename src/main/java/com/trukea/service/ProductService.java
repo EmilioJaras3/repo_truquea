@@ -61,7 +61,6 @@ public class ProductService {
         return productRepository.deleteById(id);
     }
 
-    // ✅ MÉTODO CONVERTTO DTO ACTUALIZADO
     private ProductDTO convertToDTO(Product product) {
         ProductDTO dto = new ProductDTO();
         dto.setId(product.getId());
@@ -76,7 +75,6 @@ public class ProductService {
         dto.setCiudadNombre(product.getCiudadNombre());
         dto.setDisponible(product.isDisponible());
 
-        // ✅ AGREGAR ESTA LÍNEA
         dto.setUsuarioId(product.getUsuarioId());
 
         return dto;

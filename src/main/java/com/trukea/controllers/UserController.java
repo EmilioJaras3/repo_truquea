@@ -11,11 +11,11 @@ import java.util.Map;
 
 public class UserController {
     private UserService userService;
-    private ImageService imageService;  // ✅ NUEVO SERVICIO
+    private ImageService imageService;
 
     public UserController() {
         this.userService = new UserService();
-        this.imageService = new ImageService();  // ✅ INICIALIZAR CLOUDINARY SERVICE
+        this.imageService = new ImageService();  //  INICIALIZAR CLOUDINARY SERVICE
     }
 
     public void getProfile(Context ctx) {
@@ -37,12 +37,12 @@ public class UserController {
         }
     }
 
-    // ✅ MÉTODO UPDATEPROFILE ACTUALIZADO CON CLOUDINARY
+    //  MÉTODO UPDATEPROFILE ACTUALIZADO CON CLOUDINARY
     public void updateProfile(Context ctx) {
         try {
             int userId = Integer.parseInt(ctx.pathParam("id"));
 
-            // ✅ Obtener usuario actual para manejar imagen existente
+            //  Obtener usuario actual para manejar imagen existente
             UserDTO currentUser = userService.getUserById(userId);
             if (currentUser == null) {
                 ctx.contentType("application/json");
@@ -69,7 +69,7 @@ public class UserController {
                 user.setFechaNacimiento(java.time.LocalDate.parse(fechaNacimiento));
             }
 
-            // ✅ MANEJAR IMAGEN DE PERFIL CON CLOUDINARY
+            // MANEJAR IMAGEN DE PERFIL CON CLOUDINARY
             UploadedFile uploadedFile = ctx.uploadedFile("imagen");
             if (uploadedFile != null) {
                 System.out.println("📤 Actualizando imagen de perfil para usuario ID: " + userId);
@@ -87,7 +87,7 @@ public class UserController {
                     }
 
                     user.setImagenPerfil(newImageUrl);
-                    System.out.println("✅ Nueva imagen de perfil actualizada para usuario ID: " + userId);
+                    System.out.println(" Nueva imagen de perfil actualizada para usuario ID: " + userId);
                 } else {
                     ctx.contentType("application/json");
                     ctx.status(400).json(new ApiResponse(false, "Error al subir la imagen de perfil. Verifica el formato y tamaño.", null));
