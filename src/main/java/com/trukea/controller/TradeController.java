@@ -77,12 +77,10 @@ public class TradeController {
                     }
                 }
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
             ctx.status(500).json(new ApiResponse(false, "Error de base de datos: " + e.getMessage(), null));
         } catch (Exception e) {
-
             e.printStackTrace();
             ctx.status(500).json(new ApiResponse(false, "Error al crear propuesta de trueque: " + e.getMessage(), null));
         }
