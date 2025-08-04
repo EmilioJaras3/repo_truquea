@@ -5,10 +5,7 @@ import com.trukea.ApiResponse;
 
 public class ImageController {
 
-    /**
-     * ✅ Endpoint para mostrar imágenes de Cloudinary
-     * Redirige automáticamente a Cloudinary o construye la URL
-     */
+
     public void getImage(Context ctx) {
         try {
             String fileName = ctx.pathParam("fileName");

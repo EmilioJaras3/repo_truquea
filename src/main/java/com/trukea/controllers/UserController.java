@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class UserController {
     private UserService userService;
-    private ImageService imageService;  // ✅ NUEVO SERVICIO
+    private ImageService imageService;
 
     public UserController() {
         this.userService = new UserService();

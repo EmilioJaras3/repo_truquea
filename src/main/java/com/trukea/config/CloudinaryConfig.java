@@ -11,9 +11,7 @@ public class CloudinaryConfig {
     private static final String API_KEY = "386477793112854";
     private static final String API_SECRET = "KporUuSxHWKFRqBCw-7FVZw63oA";
 
-    /**
-     * ✅ VERSIÓN SIMPLE: Solo subir imagen básica sin transformaciones
-     */
+
     public static String uploadImage(byte[] imageBytes, String folder) {
         try {
             System.out.println("🌩️ Conectando a Cloudinary (modo simple)...");
@@ -39,7 +37,6 @@ public class CloudinaryConfig {
                 writeFormField(out, boundary, "timestamp", String.valueOf(timestamp));
                 writeFormField(out, boundary, "folder", folderPath);
 
-                // ✅ FIRMA SIMPLE - Solo 3 parámetros
                 String signature = createSimpleSignature(timestamp, folderPath);
                 writeFormField(out, boundary, "signature", signature);
 
@@ -78,21 +75,19 @@ public class CloudinaryConfig {
                 String errorResponse = errorReader.lines().collect(java.util.stream.Collectors.joining());
                 errorReader.close();
 
-                System.err.println("❌ Error Cloudinary código: " + responseCode);
-                System.err.println("📋 Error detalle: " + errorResponse);
+                System.err.println(" Error Cloudinary código: " + responseCode);
+                System.err.println(" Error detalle: " + errorResponse);
             }
 
         } catch (IOException e) {
-            System.err.println("❌ Error de conexión: " + e.getMessage());
+            System.err.println(" Error de conexión: " + e.getMessage());
             e.printStackTrace();
         }
 
         return null;
     }
 
-    /**
-     * ✅ FIRMA SIMPLE - Solo folder, timestamp y api_secret
-     */
+
     private static String createSimpleSignature(long timestamp, String folder) {
         try {
             // Solo parámetros básicos en orden alfabético
@@ -118,14 +113,14 @@ public class CloudinaryConfig {
             return signature;
 
         } catch (Exception e) {
-            System.err.println("❌ Error creando firma: " + e.getMessage());
+            System.err.println(" Error creando firma: " + e.getMessage());
             return "";
         }
     }
 
-    /**
-     * Elimina una imagen de Cloudinary
-     */
+
+    // * Elimina una imagen de Cloudinary
+
     public static boolean deleteImage(String imageUrl) {
         try {
             if (imageUrl == null || !imageUrl.contains("cloudinary.com")) {
@@ -177,7 +172,7 @@ public class CloudinaryConfig {
             return success;
 
         } catch (Exception e) {
-            System.err.println("❌ Error eliminando imagen: " + e.getMessage());
+            System.err.println(" Error eliminando imagen: " + e.getMessage());
             return false;
         }
     }
