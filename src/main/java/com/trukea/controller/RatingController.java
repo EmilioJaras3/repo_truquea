@@ -1,6 +1,3 @@
-// ===================================================================
-// TU RatingController.java ACTUALIZADO - SOLO AGREGAR AL FINAL
-// ===================================================================
 package com.trukea.controller;
 
 import io.javalin.http.Context;
@@ -24,10 +21,19 @@ public class RatingController {
     public void createRating(Context ctx) {
         try {
             Map<String, Object> body = ctx.bodyAsClass(Map.class);
-            int truequeId = ((Double) body.get("trueque_id")).intValue();
-            int calificadorId = ((Double) body.get("calificador_id")).intValue();
-            int calificadoId = ((Double) body.get("calificado_id")).intValue();
-            int puntuacion = ((Double) body.get("puntuacion")).intValue();
+
+            // --- INICIO DE LA CORRECCIÓN ---
+            // Se hace el código robusto para aceptar Integer o Double
+            Number truequeIdNum = (Number) body.get("trueque_id");
+            Number calificadorIdNum = (Number) body.get("calificador_id");
+            Number calificadoIdNum = (Number) body.get("calificado_id");
+            Number puntuacionNum = (Number) body.get("puntuacion");
+            // --- FIN DE LA CORRECCIÓN ---
+
+            int truequeId = truequeIdNum.intValue();
+            int calificadorId = calificadorIdNum.intValue();
+            int calificadoId = calificadoIdNum.intValue();
+            int puntuacion = puntuacionNum.intValue();
             String comentario = (String) body.get("comentario");
 
             if (puntuacion < 1 || puntuacion > 5) {
@@ -35,7 +41,6 @@ public class RatingController {
                 return;
             }
 
-            // Verificar si ya existe una calificación
             if (ratingService.hasUserRatedTrade(truequeId, calificadorId)) {
                 ctx.status(400).json(new ApiResponse(false, "Ya has calificado este trueque", null));
                 return;
