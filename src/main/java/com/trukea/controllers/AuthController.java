@@ -20,56 +20,51 @@ public class AuthController {
             String password = (String) body.get("password");
             String confirmPassword = (String) body.get("confirmPassword");
 
-            // Validaciones
             if (name == null || lastName == null || email == null || password == null) {
                 ctx.json(new ApiResponse(false, "Todos los campos son obligatorios", null));
                 return;
             }
-
             if (!password.equals(confirmPassword)) {
                 ctx.json(new ApiResponse(false, "Las contraseñas no coinciden", null));
                 return;
             }
-
             if (password.length() < 6) {
                 ctx.json(new ApiResponse(false, "La contraseña debe tener al menos 6 caracteres", null));
                 return;
             }
 
-            Connection conn = DatabaseConfig.getConnection();
+            String checkEmailSql = "SELECT id FROM usuarios WHERE email = ?";
+            String insertUserSql = "INSERT INTO usuarios (nombre, apellido, email, password) VALUES (?, ?, ?, ?)";
 
-            // Verificar si el email ya existe
-            PreparedStatement checkStmt = conn.prepareStatement("SELECT id FROM usuarios WHERE email = ?");
-            checkStmt.setString(1, email);
-            ResultSet rs = checkStmt.executeQuery();
+            try (Connection conn = DatabaseConfig.getConnection()) {
+                // Verificar si el email ya existe
+                try (PreparedStatement checkStmt = conn.prepareStatement(checkEmailSql)) {
+                    checkStmt.setString(1, email);
+                    ResultSet rs = checkStmt.executeQuery();
+                    if (rs.next()) {
+                        ctx.json(new ApiResponse(false, "El email ya está registrado", null));
+                        return;
+                    }
+                }
 
-            if (rs.next()) {
-                ctx.json(new ApiResponse(false, "El email ya está registrado", null));
-                conn.close();
-                return;
-            }
+                // Insertar nuevo usuario
+                try (PreparedStatement insertStmt = conn.prepareStatement(insertUserSql, Statement.RETURN_GENERATED_KEYS)) {
+                    insertStmt.setString(1, name);
+                    insertStmt.setString(2, lastName);
+                    insertStmt.setString(3, email);
+                    insertStmt.setString(4, password);
 
-            // Insertar nuevo usuario
-            PreparedStatement insertStmt = conn.prepareStatement(
-                    "INSERT INTO usuarios (nombre, apellido, email, password) VALUES (?, ?, ?, ?)",
-                    Statement.RETURN_GENERATED_KEYS
-            );
-            insertStmt.setString(1, name);
-            insertStmt.setString(2, lastName);
-            insertStmt.setString(3, email);
-            insertStmt.setString(4, password);
-
-            int affectedRows = insertStmt.executeUpdate();
-            if (affectedRows > 0) {
-                ResultSet generatedKeys = insertStmt.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    int userId = generatedKeys.getInt(1);
-                    ctx.status(201).json(new ApiResponse(true, "Usuario registrado exitosamente",
-                            Map.of("userId", userId)));
+                    int affectedRows = insertStmt.executeUpdate();
+                    if (affectedRows > 0) {
+                        ResultSet generatedKeys = insertStmt.getGeneratedKeys();
+                        if (generatedKeys.next()) {
+                            int userId = generatedKeys.getInt(1);
+                            ctx.status(201).json(new ApiResponse(true, "Usuario registrado exitosamente",
+                                    Map.of("userId", userId)));
+                        }
+                    }
                 }
             }
-
-            conn.close();
         } catch (Exception e) {
             ctx.status(500).json(new ApiResponse(false, "Error del servidor", null));
             e.printStackTrace();
@@ -87,25 +82,25 @@ public class AuthController {
                 return;
             }
 
-            Connection conn = DatabaseConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement("SELECT * FROM usuarios WHERE email = ? AND password = ?");
-            stmt.setString(1, correo);
-            stmt.setString(2, contrasena);
+            String sql = "SELECT * FROM usuarios WHERE email = ? AND password = ?";
+            try (Connection conn = DatabaseConfig.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, correo);
+                stmt.setString(2, contrasena);
 
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                User user = new User();
-                user.setId(rs.getInt("id"));
-                user.setNombre(rs.getString("nombre"));
-                user.setApellido(rs.getString("apellido"));
-                user.setEmail(rs.getString("email"));
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    User user = new User();
+                    user.setId(rs.getInt("id"));
+                    user.setNombre(rs.getString("nombre"));
+                    user.setApellido(rs.getString("apellido"));
+                    user.setEmail(rs.getString("email"));
 
-                ctx.json(new ApiResponse(true, "Inicio de sesión exitoso", Map.of("user", user)));
-            } else {
-                ctx.status(401).json(new ApiResponse(false, "Credenciales inválidas", null));
+                    ctx.json(new ApiResponse(true, "Inicio de sesión exitoso", Map.of("user", user)));
+                } else {
+                    ctx.status(401).json(new ApiResponse(false, "Credenciales inválidas", null));
+                }
             }
-
-            conn.close();
         } catch (Exception e) {
             ctx.status(500).json(new ApiResponse(false, "Error del servidor", null));
             e.printStackTrace();

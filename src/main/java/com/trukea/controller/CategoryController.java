@@ -11,11 +11,11 @@ import java.util.Map;
 public class CategoryController {
 
     public void getAllCategories(Context ctx) {
-        try {
-            Connection conn = DatabaseConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement("SELECT * FROM categorias ORDER BY nombre");
+        String sql = "SELECT * FROM categorias ORDER BY nombre";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
 
-            ResultSet rs = stmt.executeQuery();
             List<Map<String, Object>> categories = new ArrayList<>();
             while (rs.next()) {
                 categories.add(Map.of(
@@ -23,9 +23,7 @@ public class CategoryController {
                         "nombre", rs.getString("nombre")
                 ));
             }
-
             ctx.json(new ApiResponse(true, "Categorías obtenidas", Map.of("categories", categories)));
-            conn.close();
         } catch (Exception e) {
             ctx.status(500).json(new ApiResponse(false, "Error del servidor", null));
             e.printStackTrace();
